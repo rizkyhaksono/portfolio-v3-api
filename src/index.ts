@@ -1,7 +1,13 @@
-import { Elysia } from "elysia";
+import { baseElysia } from "./lib/elysia";
+import cors from "@elysiajs/cors";
+import { docs } from "./lib/swagger";
 
-const app = new Elysia().get("/", () => "Hello Elysia").listen(3000);
+const api = baseElysia()
+  .use(cors({
+    origin: ["rizkyhaksono.natee.my.id", "natee.me", "natee.my.id", "localhost:3000"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }))
+  .use(docs)
+  .listen(process.env.PORT ?? 3031);
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+console.log(`🦊 Elysia is running at ${api.server?.hostname}:${api.server?.port}`);

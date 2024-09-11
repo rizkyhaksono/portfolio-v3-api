@@ -8,10 +8,18 @@
     "test": "bun test"
   },
   "dependencies": {
-    "elysia": "latest"
+    "@bogeychan/elysia-logger": "^0.1.2",
+    "@elysiajs/cors": "^1.1.1",
+    "@elysiajs/swagger": "^1.1.1",
+    "@prisma/client": "^5.19.1",
+    "arctic": "^1.9.2",
+    "elysia": "latest",
+    "lucia": "^3.2.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "bun-types": "latest",
+    "prisma": "^5.19.1"
   },
   "module": "src/index.js"
 }
