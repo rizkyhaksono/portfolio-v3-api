@@ -1,5 +1,6 @@
 import { baseElysia } from "./lib/elysia";
 import cors from "@elysiajs/cors";
+import apiRoutes from "./api";
 import { docs } from "./lib/swagger";
 
 const api = baseElysia()
@@ -8,6 +9,8 @@ const api = baseElysia()
     allowedHeaders: ["Content-Type", "Authorization"],
   }))
   .use(docs)
+  .use(apiRoutes)
+  .get("/", () => "Up and running! 🗿")
   .listen(process.env.PORT ?? 3031);
 
 console.log(`🦊 Elysia is running at ${api.server?.hostname}:${api.server?.port}`);

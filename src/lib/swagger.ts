@@ -8,20 +8,16 @@ export const docs = swagger({
     },
     tags: [
       {
-        name: "Authorization Service",
-        description: "User account service auth endpoints",
-      },
-      {
-        name: "Users",
-        description: "User Profile service endpoints",
-      },
-      {
-        name: "Portfolios",
-        description: "Rizky Haksono portofolios endpoints",
-      },
-      {
         name: "Works",
         description: "Rizky Haksono works endpoints"
+      },
+      {
+        name: "Education",
+        description: "Rizky Haksono educations endpoints"
+      },
+      {
+        name: "Project",
+        description: "Rizky Haksono projects endpoints"
       },
     ],
   },
