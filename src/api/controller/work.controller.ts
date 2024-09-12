@@ -1,14 +1,12 @@
 import { t } from "elysia";
-import { WorkService } from "./work.service";
-import { createElysia } from "../../lib/elysia";
-import { WorkRequest } from "./work.schema";
-
-const workService = new WorkService();
+import { prismaClient } from "@/lib/prismaDatabase";
+import { createElysia } from "@/lib/elysia";
+import { cloudinary, FileToString } from "@/lib/cloudinary";
 
 export const WorkController = createElysia()
   .model({
     "work.model": t.Object({
-      logo: t.String(),
+      logo: t.File(),
       jobTitle: t.String(),
       content: t.String(),
       instance: t.String(),
@@ -20,7 +18,7 @@ export const WorkController = createElysia()
   .get("/", async () => {
     return {
       status: 200,
-      data: await workService.getAllWork()
+      data: await prismaClient.work.findMany(),
     };
   },
     {
@@ -32,7 +30,11 @@ export const WorkController = createElysia()
   .get("/:id", async ({ params: { id } }) => {
     return {
       status: 200,
-      data: await workService.getWorkById(parseInt(id)),
+      data: await prismaClient.work.findUnique({
+        where: {
+          id: parseInt(id),
+        },
+      }),
     };
   },
     {
@@ -41,10 +43,18 @@ export const WorkController = createElysia()
       }
     }
   )
-  .post("/", async ({ body }: { body: any }) => {
-    return await workService.createWork({
-      ...body,
-    });
+  .post("/", async ({ body }) => {
+    // const images = document.getElementById('images') as HTMLInputElement
+    // const file = FileToString(body.logo)
+    // const upLogo = await cloudinary.uploader.upload(body.logo.toString(), {
+    //   upload_preset: "elysia",
+    // })
+    // console.log(images.files)
+    // console.log(file)
+
+    return await prismaClient.work.create({
+      data: { ...body },
+    })
   },
     {
       detail: {
@@ -63,13 +73,20 @@ export const WorkController = createElysia()
       })
     }
   )
-  .patch("/:id", async ({ params: { id }, body }: { params: { id: string }; body: any }) => {
-    await workService.updateWorkById(parseInt(id), {
-      ...body,
-    });
+  .patch("/:id", async ({ params: { id }, body: {
+    ...body
+  } }) => {
+    const updateData = prismaClient.work.update({
+      where: {
+        id: parseInt(id),
+      },
+      data: {
+        ...body
+      }
+    })
     return {
       status: 200,
-      message: "Work update successfully",
+      message: updateData,
     }
   },
     {

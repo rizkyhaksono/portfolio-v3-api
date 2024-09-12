@@ -1,6 +1,6 @@
 import { baseElysia } from "./lib/elysia";
 import cors from "@elysiajs/cors";
-import apiRoutes from "./api";
+import apiRoutes from "./api/controller";
 import { docs } from "./lib/swagger";
 
 const api = baseElysia()
