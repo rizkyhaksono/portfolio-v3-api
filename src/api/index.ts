@@ -17,7 +17,8 @@ import {
   createEducation,
   getAllEducation,
   getEducationById,
-  updateEducation
+  updateEducation,
+  deleteEducation
 } from "./controller/education";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
@@ -43,6 +44,7 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(getAllEducation)
       .use(getEducationById)
       .use(updateEducation)
+      .use(deleteEducation)
   );
 
 export default apiRoutes;
