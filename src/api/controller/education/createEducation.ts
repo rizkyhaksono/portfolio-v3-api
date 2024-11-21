@@ -1,18 +1,18 @@
 import { createElysia } from "@/lib/elysia";
 import { prismaClient } from "@/lib/prismaDatabase";
-import projectModel from "@/models/project.model";
+import educationModel from "@/models/education.mode";
 
 export default createElysia()
-  .use(projectModel)
+  .use(educationModel)
   .post("/", async ({ body }) => {
-    return await prismaClient.project.create({
+    return await prismaClient.education.create({
       data: {
-        ...body,
+        ...body
       }
     })
   }, {
-    body: "project.model",
+    body: "education.model",
     detail: {
-      tags: ["Project"],
+      tags: ["Education"],
     }
   })

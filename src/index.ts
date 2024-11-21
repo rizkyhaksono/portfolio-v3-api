@@ -11,6 +11,12 @@ const api = baseElysia()
   .use(docs)
   .use(apiRoutes)
   .get("/", () => "Up and running! 🗿")
+  .get("/ping", () => {
+    return {
+      status: 200,
+      message: "pong 🏓",
+    };
+  })
   .listen(Bun.env.PORT ?? 3031);
 
 console.log(`🦊 Elysia is running at ${api.server?.hostname}:${api.server?.port}`);

@@ -8,7 +8,7 @@ export const docs = swagger({
     },
     tags: [
       {
-        name: "Works",
+        name: "Work",
         description: "Rizky Haksono works endpoints"
       },
       {

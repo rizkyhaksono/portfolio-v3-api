@@ -1,18 +1,18 @@
 import { createElysia } from "@/lib/elysia";
 import { prismaClient } from "@/lib/prismaDatabase";
-import projectModel from "@/models/project.model";
+import workModel from "@/models/work.model";
 
 export default createElysia()
-  .use(projectModel)
+  .use(workModel)
   .post("/", async ({ body }) => {
-    return await prismaClient.project.create({
+    return await prismaClient.work.create({
       data: {
-        ...body,
+        ...body
       }
     })
   }, {
-    body: "project.model",
+    body: "work.model",
     detail: {
-      tags: ["Project"],
+      tags: ["Work"],
     }
   })
