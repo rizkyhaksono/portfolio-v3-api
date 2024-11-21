@@ -42,3 +42,47 @@ model Work {
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
 }
+
+model OAuthAccount {
+  provider          String
+  providerAccountId String @map("provider_account_id")
+  userId            String @map("user_id")
+  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  emailVerified  Boolean        @default(false) @map("email_verified")
+  isAdmin        Boolean        @default(false)
+  name           String
+  headline       String?
+  location       String?
+  about          String?
+  bannerUrl      String?
+  iconUrl        String?        @map("icon_url")
+  hashedPassword String?        @map("hashed_password")
+  passwordSalt   String?        @map("password_salt")
+  oauthAccounts  OAuthAccount[]
+  aiChat         AIChat[]
+}
+
+model AIChat {
+  id        String          @id @default(cuid())
+  userId    String
+  chatTitle String
+  messages  AIChatMessage[]
+  createdAt DateTime        @default(now()) @map("created_at")
+  user      User            @relation(fields: [userId], references: [id])
+}
+
+model AIChatMessage {
+  id        String   @id @default(cuid())
+  msg       String
+  role      String
+  createdAt DateTime @default(now()) @map("created_at")
+  AIChat    AIChat?  @relation(fields: [aIChatId], references: [id])
+  aIChatId  String?
+}

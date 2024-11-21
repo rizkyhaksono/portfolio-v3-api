@@ -19,6 +19,14 @@ export const docs = swagger({
         name: "Project",
         description: "Rizky Haksono projects endpoints"
       },
+      {
+        name: "AI",
+        description: "Rizky Haksono AI endpoints",
+        externalDocs: {
+          description: "AI documentation",
+          url: "https://ai.rizkyhaksono.com"
+        }
+      }
     ],
   },
 });
