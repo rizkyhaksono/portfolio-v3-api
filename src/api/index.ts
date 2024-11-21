@@ -8,10 +8,16 @@ import {
 } from "./controller/project";
 import {
   createWork,
-  getAllWork
+  getAllWork,
+  getWorkById,
+  updateWork,
+  deleteWork
 } from "./controller/work";
 import {
-  createEducation
+  createEducation,
+  getAllEducation,
+  getEducationById,
+  updateEducation
 } from "./controller/education";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
@@ -27,10 +33,16 @@ const apiRoutes = createElysia({ prefix: "/v3" })
     api
       .use(createWork)
       .use(getAllWork)
+      .use(getWorkById)
+      .use(updateWork)
+      .use(deleteWork)
   )
   .group("/education", (api) =>
     api
       .use(createEducation)
+      .use(getAllEducation)
+      .use(getEducationById)
+      .use(updateEducation)
   );
 
 export default apiRoutes;
