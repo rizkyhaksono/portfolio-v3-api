@@ -8,8 +8,12 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" })
 export default createElysia()
   .use(aiModel)
   .post("/", async ({ body }) => {
-    const { text } = body
-    return await model.generateContent(text)
+    const { text } = body;
+    const result = await model.generateContent(text);
+    if (result?.response?.candidates) {
+      return result.response.candidates[0]?.content?.parts?.map((part: any) => part.text).join(" ");
+    }
+    return "";
   }, {
     body: "ai.model",
     detail: {
