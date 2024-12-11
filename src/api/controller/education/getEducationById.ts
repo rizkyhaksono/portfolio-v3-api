@@ -3,7 +3,7 @@ import { prismaClient } from "@/libs/prismaDatabase";
 
 export default createElysia()
   .get("/:id", async ({ params: { id } }) => {
-    const education = await prismaClient.findUnique({
+    const education = await prismaClient.education.findUnique({
       where: { id: parseInt(id) },
     })
     return {

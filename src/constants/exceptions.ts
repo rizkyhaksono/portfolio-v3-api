@@ -74,6 +74,8 @@ class MethodNotAllowedException extends Error {
   }
 }
 class NotFoundException extends NotFoundError {
+  code = "NOT_FOUND";
+  status = 404;
   constructor(message?: string) {
     super(message ?? "The requested resource was not found.");
     this.name = "NOT_FOUND";
