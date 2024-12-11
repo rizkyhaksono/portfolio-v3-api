@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { createElysia } from "@/lib/elysia";
+import { createElysia } from "@/libs/elysia";
 import aiModel from "@/models/ai.model";
 
 const genAI = new GoogleGenerativeAI(Bun.env.GENERATIVE_AI_API_KEY ?? "")

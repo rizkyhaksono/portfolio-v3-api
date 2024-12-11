@@ -1,5 +1,5 @@
-import { createElysia } from "@/lib/elysia";
-import { prismaClient } from "@/lib/prismaDatabase";
+import { createElysia } from "@/libs/elysia";
+import { prismaClient } from "@/libs/prismaDatabase";
 import projectModel from "@/models/project.model";
 
 export default createElysia()

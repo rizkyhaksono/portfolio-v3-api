@@ -1,5 +1,5 @@
-import { createElysia } from "@/lib/elysia";
-import { prismaClient } from "@/lib/prismaDatabase";
+import { createElysia } from "@/libs/elysia";
+import { prismaClient } from "@/libs/prismaDatabase";
 import educationModel from "@/models/education.mode";
 
 export default createElysia()

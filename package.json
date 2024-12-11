@@ -8,14 +8,16 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@bogeychan/elysia-logger": "^0.1.2",
     "@elysiajs/cors": "^1.1.1",
+    "@elysiajs/opentelemetry": "^1.1.7",
     "@elysiajs/swagger": "^1.1.1",
     "@google/generative-ai": "^0.21.0",
+    "@lucia-auth/adapter-prisma": "^4.0.1",
     "@prisma/client": "^5.19.1",
     "arctic": "^2.3.0",
     "cloudinary": "^2.4.0",
     "elysia": "latest",
+    "logestic": "^1.2.4",
     "lucia": "^3.2.0",
     "zod": "^3.23.8"
   },

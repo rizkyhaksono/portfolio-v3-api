@@ -1,5 +1,5 @@
-import { createElysia } from "@/lib/elysia";
-import { prismaClient } from "@/lib/prismaDatabase";
+import { createElysia } from "@/libs/elysia";
+import { prismaClient } from "@/libs/prismaDatabase";
 
 export default createElysia()
   .get("/:id", async ({ params: { id } }) => {

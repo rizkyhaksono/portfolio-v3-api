@@ -53,20 +53,38 @@ model OAuthAccount {
 }
 
 model User {
-  id             String         @id @default(cuid())
-  email          String         @unique
-  emailVerified  Boolean        @default(false) @map("email_verified")
-  isAdmin        Boolean        @default(false)
+  id             String              @id @default(cuid())
+  email          String              @unique
+  emailVerified  Boolean             @default(false) @map("email_verified")
+  isAdmin        Boolean             @default(false)
   name           String
   headline       String?
   location       String?
   about          String?
   bannerUrl      String?
-  iconUrl        String?        @map("icon_url")
-  hashedPassword String?        @map("hashed_password")
-  passwordSalt   String?        @map("password_salt")
+  iconUrl        String?             @map("icon_url")
+  hashedPassword String?             @map("hashed_password")
+  passwordSalt   String?             @map("password_salt")
+  passwordResets PasswordResetToken?
   oauthAccounts  OAuthAccount[]
+  sessions       Session[]
   aiChat         AIChat[]
+  created_at     DateTime            @default(now()) @map("created_at")
+  updated_at     DateTime            @updatedAt @map("updated_at")
+}
+
+model Session {
+  id        String   @id
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  user      User     @relation(references: [id], fields: [userId], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  userId      String   @unique @map("user_id")
+  hashedToken String   @unique @map("hashed_token")
+  expiresAt   DateTime @map("expires_at")
+  user        User     @relation(references: [id], fields: [userId], onDelete: Cascade)
 }
 
 model AIChat {
