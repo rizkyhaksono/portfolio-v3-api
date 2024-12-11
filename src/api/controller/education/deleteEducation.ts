@@ -1,8 +1,10 @@
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
-import educationModel from "@/models/education.mode";
+import { authGuard } from "@/libs/authGuard";
+import educationModel from "@/models/education.model";
 
 export default createElysia()
+  .use(authGuard)
   .use(educationModel)
   .delete("/:id", async ({ params: { id } }) => {
     await prismaClient.education.delete({

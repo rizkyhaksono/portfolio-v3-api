@@ -5,7 +5,18 @@ import { docs } from "./libs/swagger";
 
 const api = baseElysia()
   .use(cors({
-    origin: ["rizkyhaksono.natee.my.id", "natee.me", "natee.me/ai", "natee.my.id", "localhost:3000"],
+    origin: [
+      "https://rizkyhaksono.vercel.app",
+      "rizkyhaksono.vercel.app",
+      "https://rizkyhaksono.natee.my.id",
+      "rizkyhaksono.natee.my.id",
+      "https://natee.me",
+      "natee.me",
+      "https://natee.my.id",
+      "natee.my.id",
+      "http://localhost:3000",
+      "localhost:3000",
+    ],
     allowedHeaders: ["Content-Type", "Authorization"],
   }))
   .use(docs)

@@ -1,7 +1,8 @@
 import { createElysia } from "@/libs/elysia";
 import {
   signup,
-  login
+  login,
+  logout
 } from "./controller/auth";
 import {
   getAllProject,
@@ -33,6 +34,7 @@ const apiRoutes = createElysia({ prefix: "/v3" })
     api
       .use(signup)
       .use(login)
+      .use(logout)
   )
   .group("/project", (api) =>
     api
