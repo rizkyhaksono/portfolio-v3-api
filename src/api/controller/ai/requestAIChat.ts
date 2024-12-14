@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { InternalServerErrorException } from "@/constants/exceptions";
 import { createElysia } from "@/libs/elysia";
 import aiModel from "@/models/ai.model";
 
@@ -11,9 +12,12 @@ export default createElysia()
     const { text } = body;
     const result = await model.generateContent(text);
     if (result?.response?.candidates) {
-      return result.response.candidates[0]?.content?.parts?.map((part: any) => part.text).join(" ");
+      return {
+        status: 200,
+        data: result.response.candidates[0]?.content?.parts?.map((part: any) => part.text).join(" ")
+      };
     }
-    return "";
+    return new InternalServerErrorException("Failed to generate content");
   }, {
     body: "ai.model",
     detail: {
