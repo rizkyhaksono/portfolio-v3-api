@@ -26,7 +26,8 @@ import {
   deleteEducation
 } from "./controller/education";
 import {
-  requestAIChat
+  requestAIChat,
+  getAIChat
 } from "./controller/ai";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
@@ -63,6 +64,7 @@ const apiRoutes = createElysia({ prefix: "/v3" })
   .group("/ai", (api) =>
     api
       .use(requestAIChat)
+      .use(getAIChat)
   )
 
 export default apiRoutes;
