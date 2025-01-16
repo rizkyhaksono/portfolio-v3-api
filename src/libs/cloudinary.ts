@@ -7,8 +7,8 @@ export interface CloudinaryResponse {
 
 cloudinary.config({
   cloud_name: "mynatee",
-  api_key: Bun.env.CLOUDINARY_API_KEY,
-  api_secret: Bun.env.CLOUDINARY_API_SECRET,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 export async function FileToString(file: any) {

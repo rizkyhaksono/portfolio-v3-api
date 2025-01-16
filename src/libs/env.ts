@@ -18,11 +18,11 @@ const env = () => {
     name: "env",
   });
 
-  const env = envValidateScheme.parse(Bun.env);
+  const env = envValidateScheme.parse(process.env);
 
   return app.decorate("env", {
     ...env,
-    env: Bun.env,
+    env: process.env,
   });
 };
 

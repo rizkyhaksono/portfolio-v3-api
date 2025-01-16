@@ -28,6 +28,6 @@ const api = baseElysia()
       message: "pong 🏓",
     };
   })
-  .listen(Bun.env.PORT ?? 3031);
+  .listen(process.env.PORT ?? 3031);
 
 console.log(`🦊 Elysia is running at ${api.server?.hostname}:${api.server?.port}`);

@@ -12,4 +12,4 @@ const prisma = (globalThis as any).prismaGlobal || prismaClientSingleton();
 
 export { prisma as prismaClient }
 
-if (Bun.env.NODE_ENV !== "production") (globalThis as any).prismaGlobal = prisma;
+if (process.env.NODE_ENV !== "production") (globalThis as any).prismaGlobal = prisma;
