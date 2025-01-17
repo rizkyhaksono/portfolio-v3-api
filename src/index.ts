@@ -30,4 +30,4 @@ const api = baseElysia()
   })
   .listen(process.env.PORT ?? 3031);
 
-console.log(`🦊 Elysia is running at ${api.server?.hostname}:${api.server?.port}`);
+console.log(`🦊 Elysia is running at ${process.env.NODE_ENV === "production" ? "https://" : "http://"}${api.server?.hostname}:${api.server?.port}`);
