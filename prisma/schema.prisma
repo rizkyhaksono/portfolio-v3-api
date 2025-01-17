@@ -8,15 +8,16 @@ datasource db {
 }
 
 model Project {
-  id          Int      @id @default(autoincrement())
-  image       String
-  title       String
-  description String
-  content     String
-  projectLink String
-  isFeatured  Boolean  @default(false)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  image          String
+  title          String
+  description    String
+  content        String
+  projectLink    String
+  sourceCodeLink String?
+  isFeatured     Boolean  @default(false)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 }
 
 model Education {

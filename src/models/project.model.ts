@@ -7,6 +7,7 @@ const projectModel = new Elysia().model({
     description: t.String(),
     content: t.String(),
     projectLink: t.String(),
+    sourceCodeLink: t.String().optional(),
     isFeatured: t.Boolean(),
     created_at: t.Optional(t.Date()),
     updated_at: t.Optional(t.Date())
