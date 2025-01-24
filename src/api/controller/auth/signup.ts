@@ -12,7 +12,20 @@ import authModel from "@/models/auth.model";
 
 export default createElysia()
   .use(authModel)
-  .post("/signup", async ({ body: { email, password, name }, cookie, set, logestic, env: { DOMAIN, PASSWORD_PEPPER: passwordPepper } }) => {
+  .post("/signup", async ({
+    body: {
+      email,
+      password,
+      name
+    },
+    cookie,
+    set,
+    logestic,
+    env: {
+      DOMAIN,
+      PASSWORD_PEPPER: passwordPepper
+    },
+  }) => {
     const existingUser = await prismaClient.user.findUnique({
       where: {
         email,

@@ -26,6 +26,10 @@ export const docs = swagger({
       {
         name: "AI",
         description: "Rizky Haksono's AI endpoints",
+      },
+      {
+        name: "User",
+        description: "Rizky Haksono's User endpoints",
       }
     ],
   },

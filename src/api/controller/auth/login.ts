@@ -7,7 +7,19 @@ import { lucia } from "@/libs/luciaAuth";
 
 export default createElysia()
   .use(authModel)
-  .post("/login", async ({ body: { email, password }, cookie, set, logestic, env: { DOMAIN, PASSWORD_PEPPER } }) => {
+  .post("/login", async ({
+    body: {
+      email,
+      password
+    },
+    cookie,
+    set,
+    logestic,
+    env: {
+      DOMAIN,
+      PASSWORD_PEPPER
+    },
+  }) => {
     const user = await prismaClient.user.findUnique({
       where: {
         email,

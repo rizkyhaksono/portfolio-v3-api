@@ -3,7 +3,12 @@ import { createElysia } from "@/libs/elysia";
 import { lucia } from "@/libs/luciaAuth";
 
 export default createElysia()
-  .post("/logout", async ({ cookie, env: { DOMAIN } }) => {
+  .post("/logout", async ({
+    cookie,
+    env: {
+      DOMAIN
+    },
+  }) => {
     const sessionCookie = cookie[lucia.sessionCookieName];
 
     if (!sessionCookie?.value) {

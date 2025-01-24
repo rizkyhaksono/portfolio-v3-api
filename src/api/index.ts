@@ -29,6 +29,10 @@ import {
   requestAIChat,
   getAIChat
 } from "./controller/ai";
+import {
+  getUser,
+  updateUser
+} from "./controller/user";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
   .group("/auth", (api) =>
@@ -65,6 +69,11 @@ const apiRoutes = createElysia({ prefix: "/v3" })
     api
       .use(requestAIChat)
       .use(getAIChat)
+  )
+  .group("/user", (api) =>
+    api
+      .use(getUser)
+      .use(updateUser)
   )
 
 export default apiRoutes;
