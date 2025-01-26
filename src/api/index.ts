@@ -33,6 +33,9 @@ import {
   getUser,
   updateUser
 } from "./controller/user";
+import {
+  cloudinaryUpload
+} from "./controller/upload";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
   .group("/auth", (api) =>
@@ -70,10 +73,14 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(requestAIChat)
       .use(getAIChat)
   )
-  .group("/user", (api) =>
+  .group("/me", (api) =>
     api
       .use(getUser)
       .use(updateUser)
+  )
+  .group("/upload", (api) =>
+    api
+      .use(cloudinaryUpload)
   )
 
 export default apiRoutes;

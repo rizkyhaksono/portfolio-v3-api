@@ -4,32 +4,36 @@ export const docs = swagger({
   documentation: {
     info: {
       title: "rizkyhaksono's v3 elysiaJS APIs Documentation",
-      version: "3.0.0",
+      version: "3.0.1",
     },
     tags: [
       {
         name: "Auth",
-        description: "Rizky Haksono's authentication endpoints",
+        description: "Auth endpoints to signup, login, logout, and provider oauth2",
       },
       {
         name: "Work",
-        description: "Rizky Haksono's works endpoints"
+        description: "Work endpoints to create, read, update, and delete work data",
       },
       {
         name: "Education",
-        description: "Rizky Haksono's educations endpoints"
+        description: "Education endpoints to create, read, update, and delete education data",
       },
       {
         name: "Project",
-        description: "Rizky Haksono's projects endpoints"
+        description: "Project endpoints to create, read, update, and delete project data",
       },
       {
         name: "AI",
-        description: "Rizky Haksono's AI endpoints",
+        description: "AI endpoints to chat with AI",
       },
       {
         name: "User",
-        description: "Rizky Haksono's User endpoints",
+        description: "User endpoints to get and update user data",
+      },
+      {
+        name: "Cloudinary",
+        description: "Cloudinary endpoints to upload image",
       }
     ],
   },
