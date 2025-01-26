@@ -32,8 +32,8 @@ export const docs = swagger({
         description: "User endpoints to get and update user data",
       },
       {
-        name: "Assets",
-        description: "Assets endpoints to upload image, and get image from cloudinary or minio",
+        name: "Asset",
+        description: "Asset endpoints to upload image, and get image from cloudinary or minio",
       },
     ],
   },

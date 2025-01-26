@@ -35,8 +35,9 @@ import {
 } from "./controller/user";
 import {
   cloudinaryUpload,
-  minioUpload
-} from "./controller/upload";
+  minioUpload,
+  minioDownload
+} from "./controller/asset";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
   .group("/auth", (api) =>
@@ -79,10 +80,11 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(getUser)
       .use(updateUser)
   )
-  .group("/upload", (api) =>
+  .group("/asset", (api) =>
     api
       .use(cloudinaryUpload)
       .use(minioUpload)
+      .use(minioDownload)
   )
 
 export default apiRoutes;

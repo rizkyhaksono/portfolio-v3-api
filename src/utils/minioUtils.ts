@@ -19,12 +19,12 @@ const getMinioPublicLink = async (fileName: string) => {
   );
 };
 
-const getMinioProject = async (fileName: string) => {
+const getMiniObject = async (fileName: string) => {
   return await MinioClient.getObject(Bun.env.MINIO_BUCKET_NAME!, fileName);
 };
 
 export {
   isMetaDataImg,
   getMinioPublicLink,
-  getMinioProject
+  getMiniObject
 }
