@@ -7,7 +7,7 @@ export default createElysia()
   .use(cloudinaryModel)
   .use(authGuard)
   .post(
-    "/",
+    "/cloudinary",
     async ({ body }) => {
       const secureUrl = await cloudinary.uploader.upload(body.image, {
         transformation: [{ fetch_format: "auto" }],
@@ -21,6 +21,6 @@ export default createElysia()
     },
     {
       body: "cloudinary.model",
-      tags: ["Cloudinary"],
+      tags: ["Assets"],
     }
   );
