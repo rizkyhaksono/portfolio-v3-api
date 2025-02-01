@@ -15,13 +15,12 @@ const userModel = new Elysia().model({
   }),
   "update.user.model": t.Object({
     email: t.Optional(t.String({ format: "email" })),
-    email_verified: t.Optional(t.Boolean()),
+    emailVerified: t.Optional(t.Boolean()),
     name: t.Optional(t.String()),
     headline: t.Optional(t.String()),
     location: t.Optional(t.String()),
     about: t.Optional(t.String()),
-    bannerUrl: t.Optional(t.String({ format: "uri" })),
-    updated_at: t.Optional(t.Date())
+    bannerUrl: t.Optional(t.String()),
   })
 });
 
