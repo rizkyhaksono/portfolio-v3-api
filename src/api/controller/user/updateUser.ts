@@ -23,12 +23,17 @@ export default createElysia()
       throw new BadRequestException("User not found.");
     };
 
+    const { updated_at } = body
+
     await prismaClient.User.update({
       where: { id: parseInt(id) },
-      data: body
+      data: {
+        ...body,
+        updated_at: updated_at || new Date()
+      }
     });
   }, {
-    body: "user.model",
+    body: "update.user.model",
     detail: {
       tags: ["User"]
     }
