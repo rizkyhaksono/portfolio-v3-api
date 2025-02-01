@@ -21,7 +21,6 @@ const userModel = new Elysia().model({
     location: t.Optional(t.String()),
     about: t.Optional(t.String()),
     bannerUrl: t.Optional(t.String({ format: "uri" })),
-    icon_url: t.Optional(t.String({ format: "uri" })),
     updated_at: t.Optional(t.Date())
   })
 });
