@@ -6,6 +6,22 @@ export const docs = swagger({
       title: "rizkyhaksono's v3 elysiaJS APIs Documentation",
       version: "3.0.1",
     },
+    servers: [
+      {
+        url: process.env.NODE_ENV === "development"
+          ? `http://localhost:${process.env.PORT ?? 3031}`
+          : "https://api/nateee.com",
+        description: process.env.NODE_ENV === "development" ? "Development server" : "Production server"
+      },
+      {
+        url: "https://api/natee.my.id",
+        description: "Natee's production server - my.id domain"
+      },
+      {
+        url: "https://api/nateee.com",
+        description: "Natee's production server - .com domain"
+      }
+    ],
     tags: [
       {
         name: "Auth",
@@ -35,6 +51,11 @@ export const docs = swagger({
         name: "Asset",
         description: "Asset endpoints to upload image, and get image from cloudinary or minio",
       },
+      {
+        name: "Youtube Downloader",
+        description: "YouTube content processing endpoints for extracting video metadata and downloading videos in MP4/audio formats",
+      }
     ],
   },
+  path: "/swagger"
 });

@@ -38,6 +38,9 @@ import {
   minioUpload,
   minioDownload
 } from "./controller/asset";
+import {
+  getYoutubeDownloader
+} from "./controller/tools";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
   .group("/auth", (api) =>
@@ -85,6 +88,10 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(cloudinaryUpload)
       .use(minioUpload)
       .use(minioDownload)
+  )
+  .group("/tools", (api) =>
+    api
+      .use(getYoutubeDownloader)
   )
 
 export default apiRoutes;
