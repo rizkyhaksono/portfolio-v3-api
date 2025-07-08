@@ -10,15 +10,15 @@ export const docs = swagger({
       {
         url: process.env.NODE_ENV === "development"
           ? `http://localhost:${process.env.PORT ?? 3031}`
-          : "https://api/nateee.com",
+          : "https://api.nateee.com",
         description: process.env.NODE_ENV === "development" ? "Development server" : "Production server"
       },
       {
-        url: "https://api/natee.my.id",
+        url: "https://api.natee.my.id",
         description: "Natee's production server - my.id domain"
       },
       {
-        url: "https://api/nateee.com",
+        url: "https://api.nateee.com",
         description: "Natee's production server - .com domain"
       }
     ],
