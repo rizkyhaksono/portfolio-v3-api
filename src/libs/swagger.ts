@@ -1,6 +1,7 @@
 import swagger from "@elysiajs/swagger";
 
 export const docs = swagger({
+  path: "/swagger",
   documentation: {
     info: {
       title: "rizkyhaksono's v3 elysiaJS APIs Documentation",
@@ -57,5 +58,4 @@ export const docs = swagger({
       }
     ],
   },
-  path: "/swagger"
 });

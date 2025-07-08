@@ -39,7 +39,8 @@ import {
   minioDownload
 } from "./controller/asset";
 import {
-  getYoutubeDownloader
+  getYoutubeDownloader,
+  getKodeWilayahPos
 } from "./controller/tools";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
@@ -92,6 +93,7 @@ const apiRoutes = createElysia({ prefix: "/v3" })
   .group("/tools", (api) =>
     api
       .use(getYoutubeDownloader)
+      .use(getKodeWilayahPos)
   )
 
 export default apiRoutes;

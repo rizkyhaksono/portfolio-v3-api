@@ -22,10 +22,26 @@ const api = baseElysia()
   .use(docs)
   .use(apiRoutes)
   .get("/", () => "Up and running! 🗿")
-  .get("/ping", () => {
+  .get("/ping", ({ request, headers }) => {
+    const userAgent = headers['user-agent'] ?? 'Unknown';
+    const ip = headers['x-forwarded-for'] ?? headers['x-real-ip'] ?? 'Unknown';
+    const host = headers['host'] ?? 'Unknown';
+    const referer = headers['referer'] ?? 'Direct access';
+    const acceptLanguage = headers['accept-language'] ?? 'Unknown';
+
     return {
       status: 200,
       message: "pong 🏓",
+      timestamp: new Date().toISOString(),
+      user_info: {
+        ip_address: ip,
+        user_agent: userAgent,
+        host: host,
+        referer: referer,
+        language: acceptLanguage,
+        method: request.method,
+        url: request.url
+      }
     };
   })
   .listen(process.env.PORT ?? 3031);
