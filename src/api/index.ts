@@ -40,7 +40,9 @@ import {
 } from "./controller/asset";
 import {
   getYoutubeDownloader,
-  getKodeWilayahPos
+  getKodeWilayahPos,
+  getAnime,
+  getPikachu,
 } from "./controller/tools";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
@@ -94,6 +96,8 @@ const apiRoutes = createElysia({ prefix: "/v3" })
     api
       .use(getYoutubeDownloader)
       .use(getKodeWilayahPos)
+      .use(getAnime)
+      .use(getPikachu)
   )
 
 export default apiRoutes;
