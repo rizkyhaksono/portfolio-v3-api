@@ -1,5 +1,4 @@
 import { Elysia, type ElysiaConfig } from "elysia";
-
 import logger from "./logger";
 import { error } from "@/utils/errorHandler";
 import { env } from "./env";
