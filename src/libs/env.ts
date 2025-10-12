@@ -14,6 +14,13 @@ const envValidateScheme = z.object({
   MINIO_HOST: z.string(),
   MINIO_ACCESS_KEY: z.string(),
   MINIO_SECRET_KEY: z.string(),
+  SPOTIFY_CLIENT_ID: z.string().optional(),
+  SPOTIFY_CLIENT_SECRET: z.string().optional(),
+  ETHEREUM_RPC_URL: z.string().optional(),
+  POLYGON_RPC_URL: z.string().optional(),
+  BSC_RPC_URL: z.string().optional(),
+  ARBITRUM_RPC_URL: z.string().optional(),
+  OPTIMISM_RPC_URL: z.string().optional(),
 });
 
 const env = () => {
