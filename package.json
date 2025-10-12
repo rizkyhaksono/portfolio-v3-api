@@ -17,12 +17,14 @@
     "arctic": "^2.3.0",
     "cloudinary": "^2.4.0",
     "elysia": "latest",
+    "ethers": "^6.15.0",
     "file-type": "^20.0.0",
     "logestic": "^1.2.4",
     "lucia": "^3.2.0",
     "minio": "^8.0.4",
     "redis": "^4.7.0",
     "short-unique-id": "^5.2.0",
+    "youtube-dl-exec": "^3.0.25",
     "zod": "^3.23.8"
   },
   "devDependencies": {
