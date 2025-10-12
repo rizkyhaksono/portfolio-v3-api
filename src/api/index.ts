@@ -43,7 +43,13 @@ import {
   getKodeWilayahPos,
   getAnime,
   getPikachu,
+  getSpotify,
+  getLinkedIn,
+  getDuolingo,
+  getJapaneseQuiz,
 } from "./controller/tools";
+import analytics from "./controller/analytics";
+import web3 from "./controller/web3";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
   .group("/auth", (api) =>
@@ -98,6 +104,24 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(getKodeWilayahPos)
       .use(getAnime)
       .use(getPikachu)
+  )
+  .group("/spotify", (api) =>
+    api.use(getSpotify)
+  )
+  .group("/linkedin", (api) =>
+    api.use(getLinkedIn)
+  )
+  .group("/duolingo", (api) =>
+    api.use(getDuolingo)
+  )
+  .group("/japanese-quiz", (api) =>
+    api.use(getJapaneseQuiz)
+  )
+  .group("/analytics", (api) =>
+    api.use(analytics)
+  )
+  .group("/web3", (api) =>
+    api.use(web3)
   )
 
 export default apiRoutes;
