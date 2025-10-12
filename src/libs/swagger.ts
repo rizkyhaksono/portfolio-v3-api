@@ -55,6 +55,30 @@ export const docs = swagger({
       {
         name: "Youtube Downloader",
         description: "YouTube content processing endpoints for extracting video metadata and downloading videos in MP4/audio formats",
+      },
+      {
+        name: "Spotify",
+        description: "Spotify integration endpoints for retrieving currently playing tracks, recently played songs, and top tracks",
+      },
+      {
+        name: "LinkedIn",
+        description: "LinkedIn integration endpoints for scraping and managing professional certifications and licenses",
+      },
+      {
+        name: "Duolingo",
+        description: "Duolingo progress tracking endpoints for monitoring language learning streaks, XP, and daily goals",
+      },
+      {
+        name: "Japanese Quiz",
+        description: "Japanese vocabulary quiz endpoints with JLPT N5-N1 levels for learning Kotoba (words)",
+      },
+      {
+        name: "Analytics",
+        description: "Website analytics and performance metrics endpoints for tracking page views, visitor statistics, and real-time data",
+      },
+      {
+        name: "Web3",
+        description: "Blockchain and Web3 integration endpoints for wallet verification, NFT metadata, and smart contract interactions",
       }
     ],
   },
