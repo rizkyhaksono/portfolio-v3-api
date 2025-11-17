@@ -70,6 +70,7 @@ model User {
   oauthAccounts  OAuthAccount[]
   sessions       Session[]
   aiChat         AIChat[]
+  ChatMessage    ChatMessage[]
   created_at     DateTime            @default(now()) @map("created_at")
   updated_at     DateTime            @updatedAt @map("updated_at")
 }
@@ -104,4 +105,11 @@ model AIChatMessage {
   createdAt DateTime @default(now()) @map("created_at")
   AIChat    AIChat?  @relation(fields: [aIChatId], references: [id])
   aIChatId  String?
+}
+
+model ChatMessage {
+  id      String @id @default(cuid())
+  message String
+  userId  String
+  User    User   @relation(fields: [userId], references: [id])
 }
