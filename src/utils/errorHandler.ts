@@ -64,7 +64,7 @@ const error = new Elysia()
     ServiceUnavailableException,
     UnauthorizedException,
   })
-  .onError({ as: "global" }, (ctx) => {
+  .onError({ as: "global" }, (ctx: any) => {
     const { code, error, logestic } = ctx;
 
     switch (code) {
