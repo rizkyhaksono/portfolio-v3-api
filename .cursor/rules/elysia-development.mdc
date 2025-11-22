@@ -1,0 +1,82 @@
+---
+title: Cursor-Based Pagination Rules
+product: portfolio-v3-api
+version: 1.2.0
+status: Draft
+authors: [Wanderer]
+created: 2025-11-22
+---
+
+# Cursor-Based Pagination Rules
+
+This document outlines the requirements, design, and implementation rules for cursor-based pagination in the `portfolio-v3-api` backend, built using **Elysia**, **Prisma**, and supporting infrastructure. The goal is to provide efficient, scalable, and predictable pagination for API consumers—especially for lists that may grow large over time (e.g., portfolio items, user activity logs, media uploads).
+
+## Goals
+
+- Replace offset-based pagination with **cursor-based pagination** for all list endpoints where order matters and performance is a concern.
+- Ensure consistent, stable sorting across paginated requests.
+- Improve API performance and reduce database load under large datasets.
+- Maintain developer-friendly API contracts using standardized query parameters.
+
+## Non-Goals
+
+- Backward compatibility with existing offset-based pagination (will be deprecated).
+- Support for arbitrary sorting fields (initially limited to timestamp-based cursors).
+- Real-time pagination (e.g., infinite scroll with live updates).
+
+## Technical Context
+
+- **Runtime**: Bun
+- **Framework**: Elysia
+- **ORM**: Prisma (`v6.2.1`)
+- **Validation**: Zod
+- **Auth**: Lucia + Arctic + Prisma adapter
+- **Observability**: OpenTelemetry via `@elysiajs/opentelemetry`
+- **API Docs**: Swagger via `@elysiajs/swagger`
+
+## Cursor Pagination Rules
+
+### Core Principles
+
+- All paginated resources **MUST** use **cursor-based pagination** unless explicitly exempted (e.g., small static lists).
+- The cursor **MUST** encode a stable sort key (typically `createdAt` or `id`) to guarantee consistent ordering.
+- Responses **MUST** include:
+  - `data`: array of items
+  - `nextCursor`: `string | null`
+  - `hasMore`: `boolean` (optional but recommended)
+- The cursor **SHOULD NOT** expose raw database fields directly; instead, use opaque base64-encoded strings.
+
+### Query Parameters
+
+All paginated endpoints **MUST** accept:
+
+- `cursor` *(optional, string)*: opaque cursor value from previous response.
+- `limit` *(optional, number)*: number of items per page (default: `10`, max: `50`).
+
+> Validation is enforced via **Zod**.
+
+### Sorting Strategy
+
+- Default sort: **descending by `createdAt`** (newest first).
+- Alternative sort (if needed): by `id` (guaranteed unique and monotonic).
+- **No arbitrary sort fields** in v1 to avoid performance pitfalls.
+
+### Cursor Encoding
+
+- Encode the sort key (e.g., `createdAt` timestamp or `id`) as a base64 string.
+- Example: `cursor = btoa(createdAt.toISOString())`
+- Use `ShortUniqueId` or timestamp-based cursor for determinism.
+
+> Decoding must handle malformed cursors gracefully (`400 Bad Request`).
+
+### Prisma Query Pattern
+
+```ts
+const items = await prisma.post.findMany({
+  where: {
+    // ...filters
+    createdAt: cursor ? { lt: new Date(cursorDecoded) } : undefined,
+  },
+  orderBy: { createdAt: 'desc' },
+  take: limit + 1, // +1 to check if more exists
+});
