@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="bun test" tests="2" assertions="4" failures="0" skipped="0" time="0.447358737">
+  <testsuite name="src/test/ping/index.test.ts" file="src/test/ping/index.test.ts" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="rizky">
+    <testsuite name="Ping" file="src/test/ping/index.test.ts" line="3" tests="1" assertions="2" failures="0" skipped="0" time="0.007" hostname="rizky">
+      <testcase name="returns a pong response" classname="Ping" time="0.007651" file="src/test/ping/index.test.ts" line="4" assertions="2" />
+    </testsuite>
+  </testsuite>
+  <testsuite name="src/test/project/index.test.ts" file="src/test/project/index.test.ts" tests="1" assertions="2" failures="0" skipped="0" time="0" hostname="rizky">
+    <testsuite name="Get All Project" file="src/test/project/index.test.ts" line="3" tests="1" assertions="2" failures="0" skipped="0" time="0.388" hostname="rizky">
+      <testcase name="returns all data with expected shape" classname="Get All Project" time="0.388378" file="src/test/project/index.test.ts" line="4" assertions="2" />
+    </testsuite>
+  </testsuite>
+</testsuites>
