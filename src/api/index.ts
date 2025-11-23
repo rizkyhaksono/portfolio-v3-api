@@ -27,7 +27,8 @@ import {
 } from "./controller/education";
 import {
   requestAIChat,
-  getAIChat
+  getAIChat,
+  getAIChatById,
 } from "./controller/ai";
 import {
   getUser,

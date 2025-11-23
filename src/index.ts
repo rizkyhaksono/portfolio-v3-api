@@ -2,6 +2,7 @@ import { baseElysia } from "./libs/elysia";
 import cors from "@elysiajs/cors";
 import apiRoutes from "./api";
 import { docs } from "./libs/swagger";
+import { instrumentation } from "./libs/instrumentation";
 
 const api = baseElysia()
   .use(cors({
@@ -21,8 +22,15 @@ const api = baseElysia()
   }))
   .use(docs)
   .use(apiRoutes)
-  .get("/", () => "Up and running! 🗿")
-  .get("/ping", ({ request, headers }) => {
+  .use(instrumentation)
+  .get("/", () => "Docs available at /docs")
+  .get("/ping", ({
+    request,
+    headers
+  }: {
+    request: Request;
+    headers: Record<string, string>;
+  }) => {
     const userAgent = headers['user-agent'] ?? 'Unknown';
     const ip = headers['x-forwarded-for'] ?? headers['x-real-ip'] ?? 'Unknown';
     const host = headers['host'] ?? 'Unknown';

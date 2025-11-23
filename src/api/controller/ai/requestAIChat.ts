@@ -5,39 +5,55 @@ import aiModel from "@/models/ai.model";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
 
-const genAI = new GoogleGenerativeAI(process.env.GENERATIVE_AI_API_KEY ?? "")
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" })
-
 export default createElysia()
   .use(aiModel)
   .use(authGuard)
-  .post("/", async ({ body, user }) => {
-    const { text } = body;
-    const result = await model.generateContent(text);
-    if (result?.response?.candidates) {
-      const ai = await prismaClient.AIChat.create({
-        data: {
-          userId: user.id,
-          chatTitle: text,
+  .post(
+    "/",
+    async function* ({ body, user }: { body: { text: string }; user: any }) {
+      const genAI = new GoogleGenerativeAI(Bun.env.GENERATIVE_AI_API_KEY ?? "");
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+      const { text } = body;
+
+      try {
+        const ai = await prismaClient.aIChat.create({
+          data: {
+            userId: user.id,
+            chatTitle: text,
+          },
+        });
+
+        const result = await model.generateContentStream(text);
+
+        let fullResponse = "";
+
+        for await (const chunk of result.stream) {
+          const chunkText = chunk.text();
+          fullResponse += chunkText;
+
+          yield chunkText;
         }
-      });
-      await prismaClient.AIChatMessage.create({
-        data: {
-          msg: result?.response?.candidates[0]?.content?.parts?.map((part: any) => part.text).join(" "),
-          role: result?.response?.candidates[0]?.content?.role,
-          createdAt: new Date(),
-          aIChatId: ai?.id,
-        },
-      });
-      return {
-        status: 200,
-        data: result?.response?.candidates[0]?.content?.parts?.map((part: any) => part.text).join(" ")
-      };
+
+        await prismaClient.aIChatMessage.create({
+          data: {
+            msg: fullResponse,
+            role: "model",
+            createdAt: new Date(),
+            aIChatId: ai.id,
+          },
+        });
+      } catch (error) {
+        console.error("Streaming error:", error);
+        throw new InternalServerErrorException("Failed to generate content");
+      }
+    },
+    {
+      body: "ai.model",
+      detail: {
+        tags: ["AI"],
+        summary: "Request AI Chat Generation",
+        description: "Endpoint to request AI chat generation using Google Generative AI.",
+      },
     }
-    return new InternalServerErrorException("Failed to generate content");
-  }, {
-    body: "ai.model",
-    detail: {
-      tags: ["AI"]
-    }
-  })
+  );

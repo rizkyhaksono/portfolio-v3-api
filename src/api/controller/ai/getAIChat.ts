@@ -6,8 +6,8 @@ import { authGuard } from "@/libs/authGuard";
 export default createElysia()
   .use(aiModel)
   .use(authGuard)
-  .get("/", async ({ user }) => {
-    const aiChats = await prismaClient.AIChat.findMany({
+  .get("/", async ({ user }: { user: { id: string } }) => {
+    const aiChats = await prismaClient.aIChat.findMany({
       where: {
         userId: user.id
       },
@@ -36,6 +36,8 @@ export default createElysia()
     };
   }, {
     detail: {
-      tags: ["AI"]
+      tags: ["AI"],
+      summary: "Get AI Chat History",
+      description: "Endpoint to retrieve the AI chat history for the authenticated user.",
     }
   });
