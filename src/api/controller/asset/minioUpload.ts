@@ -10,7 +10,13 @@ export default createElysia()
   .use(authGuard)
   .post(
     "/minio",
-    async ({ body }) => {
+    async ({
+      body
+    }: {
+      body: {
+        file: File;
+      }
+    }) => {
       try {
         const fileBuffer = await body.file.arrayBuffer();
         const { randomUUID } = new ShortUniqueId({ length: 20 });
@@ -56,6 +62,10 @@ export default createElysia()
     {
       body: "minio.upload",
       type: "multipart/form-data",
-      tags: ["Assets"],
+      detail: {
+        tags: ["Assets"],
+        summary: "Upload File to MinIO",
+        description: "Upload an image file to MinIO and get its public link",
+      }
     }
   );

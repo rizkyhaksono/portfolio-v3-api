@@ -7,7 +7,13 @@ export default createElysia()
   .use(minioModel)
   .post(
     "/minio/download",
-    async ({ body }) => {
+    async ({
+      body
+    }: {
+      body: {
+        filename: string;
+      }
+    }) => {
       const chunks: Buffer[] = [];
       for await (const chunk of await getMiniObject(body.filename)) {
         chunks.push(chunk);
@@ -31,12 +37,22 @@ export default createElysia()
     },
     {
       body: "minio.download",
-      tags: ["Assets"],
+      detail: {
+        tags: ["Assets"],
+        summary: "Download File from MinIO",
+        description: "Download a file from MinIO by its filename",
+      }
     }
   )
   .post(
     "/minio/download/public",
-    async ({ body }) => {
+    async ({
+      body
+    }: {
+      body: {
+        filename: string;
+      }
+    }) => {
       return {
         data: getMinioPublicLink(body.filename),
         message: "success",
@@ -44,6 +60,10 @@ export default createElysia()
     },
     {
       body: "minio.download",
-      tags: ["Assets"],
+      detail: {
+        tags: ["Assets"],
+        summary: "Get Public Link from MinIO",
+        description: "Get a public link for a file stored in MinIO by its filename",
+      }
     }
   );
