@@ -280,7 +280,7 @@ portfolio-v3-api/
 
 **Rizky Haksono**
 - GitHub: [@rizkyhaksono](https://github.com/rizkyhaksono)
-- Email: rizkyhaksono@gmail.com
+- Email: mrizkyhaksono@gmail.com
 
 ---
 
