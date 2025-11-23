@@ -1,14 +1,20 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Project {
-  id             Int      @id @default(autoincrement())
+  id             String   @id @default(cuid())
   image          String
   title          String
   description    String
@@ -21,7 +27,7 @@ model Project {
 }
 
 model Education {
-  id         Int      @id @default(autoincrement())
+  id         String   @id @default(cuid())
   logo       String
   instance   String
   content    String
@@ -32,7 +38,7 @@ model Education {
 }
 
 model Work {
-  id           Int      @id @default(autoincrement())
+  id           String   @id @default(cuid())
   logo         String
   jobTitle     String
   content      String
@@ -53,26 +59,34 @@ model OAuthAccount {
   @@unique([provider, providerAccountId])
 }
 
+enum UserRole {
+  ADMIN
+  USER
+}
+
 model User {
-  id             String              @id @default(cuid())
-  email          String              @unique
-  emailVerified  Boolean             @default(false) @map("email_verified")
-  isAdmin        Boolean             @default(false)
-  name           String
-  headline       String?
-  location       String?
-  about          String?
-  bannerUrl      String?
-  iconUrl        String?             @map("icon_url")
-  hashedPassword String?             @map("hashed_password")
-  passwordSalt   String?             @map("password_salt")
-  passwordResets PasswordResetToken?
-  oauthAccounts  OAuthAccount[]
-  sessions       Session[]
-  aiChat         AIChat[]
-  ChatMessage    ChatMessage[]
-  created_at     DateTime            @default(now()) @map("created_at")
-  updated_at     DateTime            @updatedAt @map("updated_at")
+  id                 String              @id @default(cuid())
+  email              String              @unique
+  emailVerified      Boolean             @default(false) @map("email_verified")
+  role               UserRole            @default(USER)
+  name               String
+  headline           String?
+  location           String?
+  about              String?
+  avatarUrl          String?             @map("avatar_url")
+  avatarMinioKey     String?             @map("avatar_minio_key")
+  bannerUrl          String?             @map("banner_url")
+  bannerMinioKey     String?             @map("banner_minio_key")
+  iconUrl            String?             @map("icon_url")
+  hashedPassword     String?             @map("hashed_password")
+  passwordSalt       String?             @map("password_salt")
+  passwordResets     PasswordResetToken?
+  oauthAccounts      OAuthAccount[]
+  sessions           Session[]
+  aiChat             AIChat[]
+  publicChatMessages PublicChatMessage[]
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
 }
 
 model Session {
@@ -107,9 +121,19 @@ model AIChatMessage {
   aIChatId  String?
 }
 
-model ChatMessage {
-  id      String @id @default(cuid())
-  message String
-  userId  String
-  User    User   @relation(fields: [userId], references: [id])
+model PublicChatMessage {
+  id        String              @id @default(cuid())
+  message   String              @db.Text
+  userId    String              @map("user_id")
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replyToId String?             @map("reply_to_id")
+  replyTo   PublicChatMessage?  @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   PublicChatMessage[] @relation("MessageReplies")
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+  deletedAt DateTime?           @map("deleted_at")
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@index([replyToId])
 }
