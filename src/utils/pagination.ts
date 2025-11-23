@@ -3,7 +3,6 @@ import { z } from "zod";
 /**
  * Cursor-based pagination utility following Elysia pagination rules
  */
-
 export const paginationQuerySchema = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().min(1).max(50).default(10),
