@@ -3,9 +3,11 @@ import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
 import userModel from "@/models/user.model";
 import { BadRequestException } from "@/constants/exceptions";
+import { userGuard } from "@/libs/roleGuards";
 
 export default createElysia()
   .use(userModel)
+  .use(userGuard)
   .use(authGuard)
   .patch("/:id", async ({
     body,
@@ -14,7 +16,7 @@ export default createElysia()
     },
     logestic
   }) => {
-    const userInfo = await prismaClient.User.findUnique({
+    const userInfo = await prismaClient.user.findUnique({
       where: { id }
     });
 
@@ -23,8 +25,7 @@ export default createElysia()
       throw new BadRequestException("User not found.");
     };
 
-
-    return await prismaClient.User.update({
+    return await prismaClient.user.update({
       where: { id },
       data: {
         ...body
@@ -33,6 +34,8 @@ export default createElysia()
   }, {
     body: "update.user.model",
     detail: {
-      tags: ["User"]
+      tags: ["User"],
+      summary: "Update User",
+      description: "Update user information by ID",
     }
   })

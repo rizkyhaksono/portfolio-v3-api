@@ -6,13 +6,27 @@ import { authGuard } from "@/libs/authGuard";
 export default createElysia()
   .use(userModel)
   .use(authGuard)
-  .get("/", async ({ user }) => {
-    const userInfo = await prismaClient.User.findUnique({
+  .get("/", async ({ user }: { user: { id: string } }) => {
+    const userInfo = await prismaClient.user.findUnique({
       where: {
         id: user.id
       },
-      include: {
-        aiChat: true
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        about: true,
+        emailVerified: true,
+        avatarMinioKey: true,
+        avatarUrl: true,
+        bannerMinioKey: true,
+        bannerUrl: true,
+        role: true,
+        headline: true,
+        location: true,
+        oauthAccounts: true,
+        created_at: true,
+        updated_at: true,
       }
     });
 
@@ -22,6 +36,8 @@ export default createElysia()
     }
   }, {
     detail: {
-      tags: ["User"]
+      tags: ["User"],
+      summary: "Get User Info",
+      description: "Retrieve information about the authenticated user."
     }
   })
