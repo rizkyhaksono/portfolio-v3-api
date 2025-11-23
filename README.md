@@ -1,231 +1,287 @@
 # Portfolio v3 API
 
-A comprehensive REST API built with Elysia.js and Bun runtime for rizkyhaksono's portfolio website.
+A modern, high-performance backend API built with **Elysia.js** and **Bun**, providing comprehensive services for portfolio management, authentication, social media integration, Web3 functionality, and more.
 
-## 🚀 Features
+## Features
+
+### Authentication & Authorization
+- **Multi-Provider OAuth 2.0** (Google, GitHub, Discord, Facebook)
+- **Email Conflict Prevention** - Prevents login with different providers using the same email
+- **Role-Based Access Control** (Admin, User, Guest)
+- **Session Management** with Lucia Auth
+- **Cookie & Bearer Token** authentication
 
 ### Core Features
-- **Authentication** - OAuth2 with Google, JWT-based sessions
-- **Portfolio Management** - Projects, work experience, and education CRUD
-- **Asset Management** - Cloudinary and MinIO integration for file uploads
-- **AI Integration** - AI-powered chat functionality
+- **Public Chat System** - Users can post once per day with edit and soft delete capabilities
+- **Cursor-Based Pagination** - Efficient pagination for all list endpoints
+- **Image Management** - Upload avatars and banners with Minio, auto-delete old images
+- **Asset Storage** - Support for Minio
+- **Grafana Loki Integration** - Comprehensive logging and monitoring
 
-### New Integrations
-- **🎵 Spotify** - Now playing, recently played, and top tracks
-- **💼 LinkedIn** - Certifications and licenses scraping
-- **🌍 Duolingo** - Learning progress and streak tracking
-- **🇯🇵 Japanese Quiz** - JLPT N5-N1 vocabulary quizzes
-- **📊 Analytics** - Page view tracking and real-time metrics
-- **⛓️ Web3** - Blockchain wallet verification and NFT metadata
+### Portfolio Management
+- **Projects** - Showcase your work with full CRUD operations
+- **Work Experience** - Track your professional journey
+- **Education** - Manage academic background
+- **AI Chat** - Powered by Google Generative AI
 
-## 🛠️ Tech Stack
+### Integrations
+- **Pokemon Database** - Full Pokemon data with pagination
+- **Web3 Support**
+  - Wallet balance checking (Ethereum, Polygon, BSC, Arbitrum, Optimism)
+  - Real-time cryptocurrency prices
+  - NFT data retrieval
+  - Gas price monitoring
+- **Social Media Downloaders**
+  - YouTube (videos & audio)
+  - TikTok (no watermark)
+  - Instagram (posts, reels, stories)
+  - Facebook (videos)
+  - X/Twitter (videos & media)
+- **Spotify Integration** - Currently playing, recently played, top tracks
+- **LinkedIn Scraper** - Certifications and professional data
+- **Duolingo Tracker** - Language learning progress
+- **Japanese Quiz** - JLPT N5-N1 vocabulary quizzes
 
-- **Runtime**: Bun
+## Tech Stack
+
+- **Runtime**: Bun (latest)
 - **Framework**: Elysia.js
-- **Database**: Prisma ORM
-- **Authentication**: Lucia Auth
-- **Documentation**: Swagger/OpenAPI
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: Lucia + Arctic (OAuth)
+- **Storage**: Minio
+- **Logging**: Pino + Loki
+- **Validation**: Zod
+- **API Documentation**: Scalar (OpenAPI/Swagger)
+- **Monitoring**: OpenTelemetry
 
-## 📦 Installation
+## Prerequisites
 
-### System Requirements
+- [Bun](https://bun.sh/) v1.0+
+- PostgreSQL database
+- Minio instance (for file storage)
+- Optional:  Grafana Loki instance
 
-**For YouTube Downloader feature, install yt-dlp:**
+## Quick Start
+
+### 1. Clone the repository
 ```bash
-# macOS
-brew install yt-dlp
-
-# Linux
-pip install yt-dlp
-# or
-sudo apt install yt-dlp
-
-# Windows
-pip install yt-dlp
-# or download from https://github.com/yt-dlp/yt-dlp/releases
-```
-
-### Install API
-
-```bash
-# Clone repository
 git clone https://github.com/rizkyhaksono/portfolio-v3-api.git
 cd portfolio-v3-api
-
-# Install dependencies
-bun install
-
-# Setup environment variables
-cp .env.example .env
-
-# Run database migrations
-bunx prisma migrate dev
-
-# Start development server
-bun run dev
 ```
 
-## 🔧 Environment Variables
+### 2. Install dependencies
+```bash
+bun install
+```
+
+### 3. Set up environment variables
+Create a `.env` file in the root directory:
 
 ```env
+# Server
 NODE_ENV=development
-PORT=3031
-DOMAIN=http://localhost:3031
-DATABASE_URL=postgresql://user:password@localhost:5432/db
-
-# Authentication
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-PASSWORD_PEPPER=your_password_pepper
-
-# Storage
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-MINIO_HOST=your_minio_host
-MINIO_ACCESS_KEY=your_access_key
-MINIO_SECRET_KEY=your_secret_key
-
-# Optional Integrations
-SPOTIFY_CLIENT_ID=your_spotify_client_id
-SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-PROXYCURL_API_KEY=your_proxycurl_key (for LinkedIn)
-```
-
-## 📚 API Documentation
-
-Once running, visit:
-- Swagger UI: `http://localhost:3031/swagger`
-- API Base: `http://localhost:3031/v3`
-
-### Main Endpoints
-
-#### Authentication
-- `POST /v3/auth/signup` - Register new user
-- `POST /v3/auth/login` - Login with credentials
-- `POST /v3/auth/logout` - Logout current session
-- `GET /v3/auth/provider/:provider` - OAuth2 login
-
-#### Portfolio
-- `GET /v3/project` - Get all projects
-- `POST /v3/project` - Create project
-- `GET /v3/work` - Get work experience
-- `GET /v3/education` - Get education history
-
-#### Spotify
-- `GET /v3/spotify/now-playing?token=TOKEN` - Currently playing track
-- `GET /v3/spotify/recently-played?token=TOKEN` - Recently played
-- `GET /v3/spotify/top-tracks?token=TOKEN` - Top tracks
-- `GET /v3/spotify/search?q=QUERY` - Search Spotify
-
-#### Duolingo
-- `GET /v3/duolingo/profile?username=USER` - User profile
-- `GET /v3/duolingo/streak?username=USER` - Current streak
-- `GET /v3/duolingo/daily-goal?username=USER` - Daily progress
-
-#### Japanese Quiz
-- `GET /v3/japanese-quiz/vocabulary?level=N5` - Get vocabulary
-- `GET /v3/japanese-quiz/quiz?level=N5&count=10` - Generate quiz
-- `GET /v3/japanese-quiz/random?level=N5` - Random word
-- `POST /v3/japanese-quiz/verify` - Verify answer
-
-#### Analytics
-- `POST /v3/analytics/track` - Track page view
-- `GET /v3/analytics/stats` - Get statistics
-- `GET /v3/analytics/top-pages` - Most visited pages
-- `GET /v3/analytics/realtime` - Real-time data
-
-#### Web3
-- `GET /v3/web3/wallet/:address` - Wallet information
-- `POST /v3/web3/verify-signature` - Verify signature
-- `GET /v3/web3/nft/:contract/:tokenId` - NFT metadata
-- `GET /v3/web3/gas-price` - Current gas prices
-
-#### LinkedIn
-- `GET /v3/linkedin/certifications` - Get certifications
-
-## 🔐 Authentication
-
-### Spotify
-1. Create app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Get Client ID and Secret
-3. For user endpoints, implement OAuth2 flow to get access token
-
-### Duolingo
-Uses unofficial API - no authentication required
-- Just provide username in query parameters
-
-### LinkedIn
-Requires external scraping service:
-- [Proxycurl](https://nubela.co/proxycurl/) - Paid API
-- Or manually update certifications via POST endpoint
-
-## 📊 Analytics Recommendations
-
-### Self-Hosted Options
-- **Umami** - Simple, privacy-focused ([umami.is](https://umami.is))
-- **Plausible** - Lightweight analytics ([plausible.io](https://plausible.io))
-- **Matomo** - Full-featured ([matomo.org](https://matomo.org))
-
-### Cloud-Based
-- **Vercel Analytics** - Built-in with Vercel
-- **Cloudflare Web Analytics** - Free tier available
-
-## 🌐 Web3 Integration
-
-To use Web3 features, install ethers.js:
-
-```bash
-bun add ethers
-```
-
-Supported features:
-- Wallet verification
-- ENS resolution
-- NFT metadata
-- Gas price tracking
-- Transaction details
-
-## 📝 Development
-
-```bash
-# Development
-bun run dev
-
-# Build
-bun run build
-
-# Production
-bun run start
+DOMAIN=localhost
+BASE_URL=http://localhost:3121
+PORT=3121
 
 # Database
-bunx prisma studio          # Open Prisma Studio
-bunx prisma migrate dev     # Run migrations
-bunx prisma generate        # Generate client
+DATABASE_URL="postgresql://user:password@localhost:5432/portfolio-v3"
+
+# Authentication
+PASSWORD_PEPPER=your-secret-pepper-string
+
+# OAuth Providers
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+DISCORD_CLIENT_ID=your-discord-client-id
+DISCORD_CLIENT_SECRET=your-discord-client-secret
+FACEBOOK_CLIENT_ID=your-facebook-client-id
+FACEBOOK_CLIENT_SECRET=your-facebook-client-secret
+
+# Minio (S3-compatible storage)
+MINIO_HOST=your-minio-host
+MINIO_BUCKET_NAME=portfolio
+MINIO_ACCESS_KEY=your-access-key
+MINIO_SECRET_KEY=your-secret-key
+
+# Grafana Loki (optional)
+LOKI_HOST=http://your-loki-host:3100
+LOKI_USERNAME=admin
+LOKI_PASSWORD=your-loki-password
+
+# Web3 RPC URLs (optional)
+ETHEREUM_RPC_URL=https://eth.llamarpc.com
+POLYGON_RPC_URL=https://polygon-rpc.com
+BSC_RPC_URL=https://bsc-dataseed.binance.org
+ARBITRUM_RPC_URL=https://arb1.arbitrum.io/rpc
+OPTIMISM_RPC_URL=https://mainnet.optimism.io
+
+# External APIs (optional)
+SPOTIFY_CLIENT_ID=your-spotify-client-id
+SPOTIFY_CLIENT_SECRET=your-spotify-client-secret
+RAPIDAPI_KEY=your-rapidapi-key
+ALCHEMY_API_KEY=your-alchemy-key
 ```
 
-## 🧪 Testing
+### 4. Run database migrations
+```bash
+bunx prisma migrate dev
+```
+
+### 5. Start the development server
+```bash
+bun dev
+```
+
+The API will be available at `http://localhost:3121`
+
+## API Documentation
+
+Interactive API documentation is available at:
+- **Scalar UI**: `http://localhost:3121/docs` (recommended)
+- **Swagger JSON**: `http://localhost:3121/docs/json`
+
+## Authentication Flow
+
+### OAuth Authentication
+1. Initiate OAuth: `GET /v3/auth/{provider}` (google, github, discord, facebook)
+2. User authorizes on provider's site
+3. Callback: `GET /v3/auth/{provider}/callback`
+4. Session cookie is set automatically
+
+### Traditional Authentication
+- **Sign up**: `POST /v3/auth/signup`
+- **Login**: `POST /v3/auth/login`
+- **Logout**: `POST /v3/auth/logout`
+
+### Using the API
+Include authentication in requests:
+```bash
+# Using Bearer token
+curl -H "Authorization: Bearer YOUR_SESSION_TOKEN" http://localhost:3121/v3/me
+
+# Using cookie (automatically set after login)
+curl -b "auth_session=YOUR_SESSION_COOKIE" http://localhost:3121/v3/me
+```
+
+## Pagination
+
+All list endpoints support cursor-based pagination:
 
 ```bash
-# Run tests (if configured)
-bun test
+# First page
+GET /v3/projects?limit=10
+
+# Next page using cursor
+GET /v3/projects?cursor=BASE64_CURSOR&limit=10
 ```
 
-## 📄 License
+Response format:
+```json
+{
+  "status": 200,
+  "message": "Success",
+  "data": [...],
+  "nextCursor": "BASE64_CURSOR_OR_NULL",
+  "hasMore": true
+}
+```
 
-MIT License - see LICENSE file for details
+## Key Endpoints
 
-## 👤 Author
+### Authentication
+- `GET /v3/auth/{provider}` - OAuth initiation
+- `POST /v3/auth/signup` - User registration
+- `POST /v3/auth/login` - User login
+- `POST /v3/auth/logout` - User logout
 
-**rizkyhaksono**
+### Public Chat
+- `GET /v3/public-chat` - Get all posts (paginated, public)
+- `POST /v3/public-chat` - Create post (1 per day limit)
+- `PATCH /v3/public-chat/:id` - Update own post
+- `DELETE /v3/public-chat/:id` - Soft delete own post
+
+### User Profile
+- `GET /v3/me` - Get current user
+- `PATCH /v3/me` - Update profile
+- `POST /v3/me/avatar` - Upload avatar
+- `POST /v3/me/banner` - Upload banner
+
+### Portfolio
+- `GET /v3/projects` - List projects (paginated)
+- `GET /v3/work` - List work experience (paginated)
+- `GET /v3/education` - List education (paginated)
+
+### Pokemon
+- `GET /v3/tools/pokemon` - List Pokemon (paginated)
+- `GET /v3/tools/pokemon/:id` - Get Pokemon details
+
+### Web3
+- `GET /v3/web3/wallet/:address` - Check wallet balance
+- `GET /v3/web3/crypto/price` - Get crypto prices
+- `GET /v3/web3/crypto/:coin/chart` - Get price charts
+
+### Social Media Downloaders
+- `GET /v3/tools/youtube/info` - YouTube video info
+- `GET /v3/tools/tiktok/downloader` - TikTok downloader
+- `GET /v3/tools/instagram/downloader` - Instagram downloader
+- `GET /v3/tools/facebook/downloader` - Facebook downloader
+- `GET /v3/tools/x/downloader` - X/Twitter downloader
+
+## Security Features
+
+- **CSRF Protection** via origin verification
+- **Rate Limiting** on sensitive endpoints
+- **Password Hashing** with pepper
+- **Secure Session Cookies** (httpOnly, secure in production)
+- **Email Conflict Prevention** across OAuth providers
+- **Role-Based Access Control** (Admin, User, Guest)
+
+## Project Structure
+
+```
+portfolio-v3-api/
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   └── migrations/            # Database migrations
+├── src/
+│   ├── api/
+│   │   ├── controller/        # Route controllers
+│   │   │   ├── auth/         # Authentication
+│   │   │   ├── publicChat/   # Public chat
+│   │   │   ├── user/         # User management
+│   │   │   ├── project/      # Projects
+│   │   │   ├── work/         # Work experience
+│   │   │   ├── education/    # Education
+│   │   │   ├── tools/        # Utilities & integrations
+│   │   │   └── web3/         # Web3 endpoints
+│   │   └── index.ts          # API routes aggregator
+│   ├── libs/                 # Core libraries
+│   │   ├── authGuard.ts      # Auth middleware
+│   │   ├── roleGuards.ts     # RBAC middleware
+│   │   ├── luciaAuth.ts      # Lucia configuration
+│   │   ├── oauthProviders.ts # OAuth setup
+│   │   ├── lokiLogger.ts     # Loki logging
+│   │   ├── minioClient.ts    # Minio client
+│   │   └── prismaDatabase.ts # Prisma client
+│   ├── models/               # Elysia type models
+│   ├── utils/                # Utility functions
+│   │   ├── pagination.ts     # Pagination helpers
+│   │   ├── oauthUtils.ts     # OAuth utilities
+│   │   └── minioUtils.ts     # Minio utilities
+│   ├── constants/            # Constants & exceptions
+│   └── index.ts             # Application entry point
+└── package.json
+```
+
+## Author
+
+**Rizky Haksono**
 - GitHub: [@rizkyhaksono](https://github.com/rizkyhaksono)
-- LinkedIn: [rizkyhaksono](https://linkedin.com/in/rizkyhaksono)
-- Website: [rizkyhaksono.vercel.app](https://rizkyhaksono.vercel.app)
+- Email: rizkyhaksono@gmail.com
 
-## 🤝 Contributing
+---
 
-Contributions, issues, and feature requests are welcome!
-
-## ⭐ Show your support
-
-Give a ⭐️ if this project helped you!
+Built with ❤️ using Bun and Elysia.js
