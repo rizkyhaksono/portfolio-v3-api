@@ -9,6 +9,8 @@ import { password as bunPassword } from "bun";
 import { generateId } from "lucia";
 import { alphabet, generateRandomString } from "oslo/crypto";
 import authModel from "@/models/auth.model";
+import { t } from "elysia";
+import lokiLogger from "@/libs/lokiLogger";
 
 export default createElysia()
   .use(authModel)
@@ -20,12 +22,11 @@ export default createElysia()
     },
     cookie,
     set,
-    logestic,
     env: {
       DOMAIN,
       PASSWORD_PEPPER: passwordPepper
     },
-  }) => {
+  }: any) => {
     const existingUser = await prismaClient.user.findUnique({
       where: {
         email,
@@ -33,7 +34,7 @@ export default createElysia()
     });
 
     if (existingUser) {
-      logestic.error("User already exists.");
+      lokiLogger.error({ message: "User already exists", email });
       throw new ConflictException("User already exists.");
     }
 
@@ -69,12 +70,24 @@ export default createElysia()
 
       return newUser;
     } catch (error) {
-      logestic.error(error as string);
+      lokiLogger.error({ message: "Failed to create user", error: error instanceof Error ? error.message : "Unknown error" });
       throw new InternalServerErrorException();
     }
   }, {
     detail: {
       tags: ["Auth"],
+      summary: "Register a new user",
+      description: "Create a new user account with email and password",
     },
-    body: "auth.signup"
+    body: "auth.signup",
+    response: {
+      201: t.Object({
+        id: t.String(),
+        email: t.String(),
+        name: t.String(),
+        role: t.String(),
+        createdAt: t.Date(),
+        updatedAt: t.Date(),
+      }),
+    },
   })
