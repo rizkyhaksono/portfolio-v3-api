@@ -3,15 +3,15 @@ import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
 import projectModel from "@/models/project.model";
+import { adminGuard } from "@/libs/roleGuards";
 
 export default createElysia()
   .use(authGuard)
   .use(projectModel)
-  .patch("/:id", async ({ body, user, params: { id } }) => {
-    if (!user.isAdmin) throw new ForbiddenException();
-
+  .use(adminGuard)
+  .patch("/:id", async ({ body, params: { id } }) => {
     await prismaClient.project.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: body,
     })
     return {
@@ -22,5 +22,7 @@ export default createElysia()
     body: "project.model",
     detail: {
       tags: ["Project"],
+      summary: "Update Project",
+      description: "Update an existing project by its ID"
     }
   })
