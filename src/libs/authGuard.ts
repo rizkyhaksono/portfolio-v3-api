@@ -19,10 +19,19 @@ const authGuard = new Elysia({
     host: t.Optional(t.String()),
     authorization: t.Optional(t.String())
   })
-}).resolve({ as: "scoped" }, async ({ cookie, headers: { origin, host, authorization }, request: { method } }): Promise<{ user: User }> => {
+}).resolve({ as: "scoped" }, async ({ cookie, headers: { origin, host, authorization }, request: { method } }: any): Promise<{ user: User }> => {
   const sessionCookie = cookie[sessionCookieName];
-  const sessionId: string | null | undefined =
-    lucia.readBearerToken(authorization ?? "") ?? sessionCookie?.value;
+
+  let sessionId: string | null | undefined = null;
+
+  if (authorization) {
+    const bearerToken = lucia.readBearerToken(authorization);
+    if (bearerToken) {
+      sessionId = bearerToken;
+    }
+  }
+
+  if (!sessionId) sessionId = sessionCookie?.value;
 
   if (
     !authorization &&
@@ -34,21 +43,24 @@ const authGuard = new Elysia({
         "rizkyhaksono.vercel.app",
         "https://rizkyhaksono.natee.my.id",
         "rizkyhaksono.natee.my.id",
-        "https://natee.me",
-        "natee.me",
+        "https://nateee.com",
+        "https://nateon.io",
         "https://natee.my.id",
+        "nateee.com",
+        "nateon.io",
         "natee.my.id",
         "http://localhost:3000",
         "localhost:3000",
+        "http://localhost:3005",
+        "localhost:3005",
       ]))
   ) {
     throw new ForbiddenException("Invalid origin");
   }
-  if (!sessionId) {
-    throw new UnauthorizedException();
-  }
 
-  const { session, user } = await lucia.validateSession(sessionId || "");
+  if (!sessionId) throw new UnauthorizedException();
+
+  const { session, user } = await lucia.validateSession(sessionId);
 
   if (!session) {
     const newSessionCookie = lucia.createBlankSessionCookie();
@@ -60,7 +72,7 @@ const authGuard = new Elysia({
   }
 
   if (session?.fresh) {
-    const newSessionCookie = lucia.createSessionCookie(sessionId || "");
+    const newSessionCookie = lucia.createSessionCookie(sessionId);
     sessionCookie?.set({
       value: newSessionCookie.value,
       ...newSessionCookie.attributes,

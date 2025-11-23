@@ -31,9 +31,7 @@ export async function checkEmailConflict(
   }
 
   // Check if user has OAuth account with different provider
-  const existingOAuthAccount = user.oauthAccounts.find(
-    (account: { provider: string; providerId: string; userId: string }) => account.provider !== currentProvider
-  );
+  const existingOAuthAccount = user.oauthAccounts.find((account) => account.provider !== currentProvider);
 
   if (existingOAuthAccount) {
     logger.warn({

@@ -17,8 +17,9 @@ const lucia = new Lucia(adapter, {
       email: attributes.email,
       about: attributes.about,
       iconUrl: attributes.iconUrl,
+      avatarUrl: attributes.avatarUrl,
       bannerUrl: attributes.bannerUrl,
-      isAdmin: attributes.isAdmin,
+      role: attributes.role,
       headline: attributes.headline,
       location: attributes.location,
     }
@@ -37,8 +38,9 @@ interface DatabaseUserAttributes {
   email: User["email"];
   about: User["about"];
   iconUrl: User["iconUrl"];
+  avatarUrl: User["avatarUrl"];
   bannerUrl: User["bannerUrl"];
-  isAdmin: User["isAdmin"];
+  role: User["role"];
   headline: User["headline"];
   location: User["location"];
 };
