@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 
 const projectModel = new Elysia().model({
   "project.model": t.Object({
-    image: t.String({ format: "uri" }),
+    image: t.String(),
     title: t.String(),
     description: t.String(),
     content: t.String(),
