@@ -1,52 +1,19 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
-import youtubedl from "youtube-dl-exec";
-
-interface VideoInfo {
-  title: string;
-  duration: number;
-  thumbnail: string;
-  uploader?: string;
-  channel?: string;
-  view_count: number;
-  description: string;
-  upload_date: string;
-  formats?: Array<{
-    vcodec: string;
-    acodec: string;
-    format_note?: string;
-    height?: number;
-    ext: string;
-    filesize?: number;
-    filesize_approx?: number;
-    fps?: number;
-    abr?: number;
-  }>;
-}
+import { Innertube } from "youtubei.js";
 
 export default createElysia()
-  .get("/", async () => {
-    return {
-      message: "YouTube Downloader API",
-      endpoints: {
-        info: "GET /info?url=YOUTUBE_URL - Get video information",
-        download: "GET /download?url=YOUTUBE_URL&format=mp4|mp3 - Download video/audio",
-      },
-      usage: {
-        "Get video info": "/info?url=https://youtube.com/watch?v=VIDEO_ID",
-        "Download video": "/download?url=https://youtube.com/watch?v=VIDEO_ID&format=mp4",
-        "Download audio": "/download?url=https://youtube.com/watch?v=VIDEO_ID&format=mp3",
-      },
-      note: "Requires yt-dlp or youtube-dl installed on the system. Install with: 'pip install yt-dlp' or 'brew install yt-dlp'",
-    };
-  }, {
-    detail: {
-      tags: ["YouTube Downloader"],
-      summary: "YouTube Downloader API Information",
+  .get("/info", async ({
+    query,
+    set
+  }: {
+    query: {
+      url: string
     },
-  })
-
-  .get("/info", async ({ query, set }) => {
+    set: {
+      status: number
+    }
+  }) => {
     const { url } = query;
 
     if (!url) {
@@ -58,43 +25,44 @@ export default createElysia()
     }
 
     try {
-      const result = await youtubedl(url, {
-        dumpSingleJson: true,
-        noCheckCertificates: true,
-        noWarnings: true,
-        preferFreeFormats: true,
-      });
+      const youtube = await Innertube.create();
 
-      const info = result as VideoInfo;
+      // Extract video ID from URL
+      const videoId = extractVideoId(url);
+      if (!videoId) {
+        set.status = 400;
+        return {
+          success: false,
+          error: "Invalid YouTube URL",
+        };
+      }
+
+      const info = await youtube.getInfo(videoId);
 
       return {
         success: true,
         data: {
-          title: info.title,
-          duration: info.duration,
-          thumbnail: info.thumbnail,
-          author: info.uploader || info.channel,
-          viewCount: info.view_count,
-          description: info.description,
-          uploadDate: info.upload_date,
+          title: info.basic_info.title,
+          duration: info.basic_info.duration,
+          thumbnail: info.basic_info.thumbnail?.[0]?.url,
+          author: info.basic_info.author,
+          viewCount: info.basic_info.view_count,
+          description: info.basic_info.short_description,
           formats: {
-            video: info.formats
-              ?.filter((f: any) => f.vcodec !== "none" && f.acodec !== "none")
+            video: info.streaming_data?.formats?.slice(0, 10).map((f: any) => ({
+              quality: f.quality_label || `${f.height}p` || "unknown",
+              format: f.mime_type?.split(';')[0]?.split('/')[1] || "mp4",
+              bitrate: f.bitrate,
+              fps: f.fps,
+            })) || [],
+            audio: info.streaming_data?.adaptive_formats
+              ?.filter((f: any) => f.has_audio && !f.has_video)
+              ?.slice(0, 5)
               .map((f: any) => ({
-                quality: f.format_note || f.height ? `${f.height}p` : "unknown",
-                format: f.ext,
-                filesize: f.filesize || f.filesize_approx,
-                fps: f.fps,
-              }))
-              .slice(0, 10) || [],
-            audio: info.formats
-              ?.filter((f: any) => f.acodec !== "none" && f.vcodec === "none")
-              .map((f: any) => ({
-                quality: f.abr ? `${f.abr}kbps` : "unknown",
-                format: f.ext,
-                filesize: f.filesize || f.filesize_approx,
-              }))
-              .slice(0, 5) || [],
+                quality: f.bitrate ? `${Math.round(f.bitrate / 1000)}kbps` : "unknown",
+                format: f.mime_type?.split(';')[0]?.split('/')[1] || "mp4",
+                bitrate: f.bitrate,
+              })) || [],
           },
         },
       };
@@ -103,7 +71,7 @@ export default createElysia()
       return {
         success: false,
         error: error.message || "Failed to fetch video information",
-        hint: "Make sure yt-dlp is installed: pip install yt-dlp",
+        hint: "Make sure the URL is valid and the video is publicly available",
       };
     }
   }, {
@@ -111,13 +79,23 @@ export default createElysia()
       url: t.String(),
     }),
     detail: {
-      tags: ["YouTube Downloader"],
-      summary: "Get YouTube video information",
-      description: "Returns video metadata including title, duration, thumbnail, and available formats",
+      tags: ["Social Media Downloaders"],
+      summary: "YouTube info downloader",
+      description: "Get video information from YouTube posts",
     },
   })
-
-  .get("/download", async ({ query, set }) => {
+  .get("/download", async ({
+    query,
+    set
+  }: {
+    query: {
+      url: string;
+      format?: "mp4" | "mp3";
+    };
+    set: {
+      status: number;
+    };
+  }) => {
     const { url, format = "mp4" } = query;
 
     if (!url) {
@@ -126,50 +104,76 @@ export default createElysia()
     }
 
     try {
-      // Get video info first to get the title
-      const infoResult = await youtubedl(url, {
-        dumpSingleJson: true,
-        noCheckCertificates: true,
-        noWarnings: true,
-      });
+      const youtube = await Innertube.create();
 
-      const info = infoResult as VideoInfo;
-      const title = info.title.replace(/[^\w\s-]/gi, "").trim().replace(/\s+/g, "_");
+      // Extract video ID from URL
+      const videoId = extractVideoId(url);
+      if (!videoId) {
+        set.status = 400;
+        return {
+          success: false,
+          error: "Invalid YouTube URL",
+        };
+      }
+
+      const info = await youtube.getInfo(videoId);
+      const title = info.basic_info.title?.replace(/[^\w\s-]/gi, "").trim().replace(/\s+/g, "_") || "video";
 
       if (format === "mp3") {
-        // Download as audio (MP3)
-        const audioResult = await youtubedl(url, {
-          extractAudio: true,
-          audioFormat: "mp3",
-          audioQuality: 0, // Best quality
-          output: "-", // Output to stdout
-          noCheckCertificates: true,
-          noWarnings: true,
+        // Get best audio format
+        const audioFormat = info.streaming_data?.adaptive_formats?.find(
+          (f: any) => f.has_audio && !f.has_video && f.mime_type?.includes('audio/mp4')
+        );
+
+        if (!audioFormat) {
+          set.status = 404;
+          return {
+            success: false,
+            error: "No audio format available for this video",
+          };
+        }
+
+        // Get download URL
+        const stream = await youtube.download(videoId, {
+          type: 'audio',
+          quality: 'best',
+          format: 'mp4',
         });
 
-        const audioBuffer = (audioResult as any).stdout || audioResult;
+        // Convert stream to buffer
+        const chunks: Uint8Array[] = [];
+        for await (const chunk of stream) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
 
-        return new Response(audioBuffer, {
+        return new Response(buffer, {
           headers: {
             "Content-Type": "audio/mpeg",
             "Content-Disposition": `attachment; filename="${title}.mp3"`,
+            "Content-Length": buffer.length.toString(),
           },
         });
       } else {
-        // Download as video (MP4)
-        const videoResult = await youtubedl(url, {
-          format: "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
-          output: "-", // Output to stdout
-          noCheckCertificates: true,
-          noWarnings: true,
+        // Get best video+audio format
+        const stream = await youtube.download(videoId, {
+          type: 'video+audio',
+          quality: 'best',
+          format: 'mp4',
         });
 
-        const videoBuffer = (videoResult as any).stdout || videoResult;
+        // Convert stream to buffer
+        const chunks: Uint8Array[] = [];
+        for await (const chunk of stream) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
 
-        return new Response(videoBuffer, {
+        return new Response(buffer, {
           headers: {
             "Content-Type": "video/mp4",
             "Content-Disposition": `attachment; filename="${title}.mp4"`,
+            "Content-Length": buffer.length.toString(),
           },
         });
       }
@@ -178,7 +182,7 @@ export default createElysia()
       return {
         success: false,
         error: error.message || "Failed to download video",
-        hint: "Make sure yt-dlp is installed: pip install yt-dlp",
+        hint: "Make sure the URL is valid and the video is publicly available",
       };
     }
   }, {
@@ -187,8 +191,25 @@ export default createElysia()
       format: t.Optional(t.Union([t.Literal("mp4"), t.Literal("mp3")])),
     }),
     detail: {
-      tags: ["YouTube Downloader"],
-      summary: "Download YouTube video or audio",
-      description: "Downloads video as MP4 or audio as MP3 format. Requires yt-dlp installed on the system.",
+      tags: ["Social Media Downloaders"],
+      summary: "YouTube media downloader",
+      description: "Download videos and media from YouTube posts",
     },
-  })
+  });
+
+// Helper function to extract video ID from YouTube URL
+function extractVideoId(url: string): string | null {
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+    /^([a-zA-Z0-9_-]{11})$/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
