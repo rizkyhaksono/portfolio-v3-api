@@ -101,7 +101,14 @@ export default createElysia()
     },
   })
 
-  .get("/vocabulary", async ({ query }) => {
+  .get("/vocabulary", async ({
+    query
+  }: {
+    query: {
+      level: string;
+      limit: string;
+    };
+  }) => {
     const { level = "N5", limit = "20" } = query;
 
     const validLevels = ["N5", "N4", "N3", "N2", "N1"];
@@ -140,8 +147,7 @@ export default createElysia()
       description: "Retrieves Japanese vocabulary words for specified JLPT level",
     },
   })
-
-  .get("/quiz", async ({ query }) => {
+  .get("/quiz", async ({ query }: any) => {
     const { level = "N5", count = "10" } = query;
 
     const validLevels = ["N5", "N4", "N3", "N2", "N1"];
@@ -183,7 +189,7 @@ export default createElysia()
     },
   })
 
-  .get("/random", async ({ query }) => {
+  .get("/random", async ({ query }: any) => {
     const { level = "N5" } = query;
 
     const validLevels = ["N5", "N4", "N3", "N2", "N1"];
@@ -228,7 +234,7 @@ export default createElysia()
     },
   })
 
-  .post("/verify", async ({ body }) => {
+  .post("/verify", async ({ body }: any) => {
     const { questionId, answer, correct } = body;
 
     const isCorrect = answer === correct;
