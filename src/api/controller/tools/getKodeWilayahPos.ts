@@ -2,31 +2,6 @@ import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
 
 export default createElysia()
-  .get("/postal-code/info", async () => {
-    return {
-      message: "Indonesian Postal Code (Kode Pos) API",
-      endpoints: {
-        provinces: "GET /provinces - Get all provinces",
-        cities: "GET /cities/:provinceId - Get cities by province ID",
-        districts: "GET /districts/:cityId - Get districts by city ID",
-        villages: "GET /villages/:districtId - Get villages by district ID",
-        search: "GET /search?q=location_name - Search postal code by location name",
-        postalCode: "GET /postal/:code - Get location details by postal code"
-      },
-      usage: {
-        "Get provinces": "/provinces",
-        "Get cities": "/cities/31",
-        "Search location": "/search?q=jakarta",
-        "Get by postal code": "/postal/12345"
-      }
-    };
-  }, {
-    detail: {
-      tags: ["Indonesian Postal Code"],
-      summary: "Indonesian Postal Code API Information"
-    }
-  })
-
   .get("/provinces", async () => {
     try {
       const response = await fetch("https://wilayah.id/api/provinces.json");
@@ -49,8 +24,13 @@ export default createElysia()
       summary: "Get all Indonesian provinces"
     }
   })
-
-  .get("/cities/:provinceId", async ({ params }) => {
+  .get("/cities/:provinceId", async ({
+    params
+  }: {
+    params: {
+      provinceId: string;
+    };
+  }) => {
     const { provinceId } = params;
 
     try {
@@ -77,8 +57,13 @@ export default createElysia()
       summary: "Get cities by province ID"
     }
   })
-
-  .get("/districts/:cityId", async ({ params }) => {
+  .get("/districts/:cityId", async ({
+    params
+  }: {
+    params: {
+      cityId: string;
+    };
+  }) => {
     const { cityId } = params;
 
     try {
@@ -105,8 +90,13 @@ export default createElysia()
       summary: "Get districts by city ID"
     }
   })
-
-  .get("/villages/:districtId", async ({ params }) => {
+  .get("/villages/:districtId", async ({
+    params
+  }: {
+    params: {
+      districtId: string;
+    };
+  }) => {
     const { districtId } = params;
 
     try {
@@ -133,8 +123,13 @@ export default createElysia()
       summary: "Get villages by district ID"
     }
   })
-
-  .post("/cari-kode-pos", async ({ body }) => {
+  .post("/cari-kode-pos", async ({
+    body
+  }: {
+    body: {
+      kode_pos: string;
+    };
+  }) => {
     const { kode_pos } = body;
 
     try {
