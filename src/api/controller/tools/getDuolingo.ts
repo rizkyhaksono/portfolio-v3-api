@@ -81,27 +81,13 @@ async function getDailyGoal(username: string) {
 }
 
 export default createElysia()
-  .get("/", async () => {
-    return {
-      message: "Duolingo Progress API",
-      endpoints: {
-        profile: "GET /profile?username=USERNAME - Get user profile and progress",
-        dailyGoal: "GET /daily-goal?username=USERNAME - Get daily goal progress",
-        streak: "GET /streak?username=USERNAME - Get current streak",
-      },
-      note: "This uses the unofficial Duolingo API. Rate limits may apply.",
-      example: {
-        username: "rizkyhaksono",
-      },
+  .get("/profile", async ({
+    query
+  }: {
+    query: {
+      username: string;
     };
-  }, {
-    detail: {
-      tags: ["Duolingo"],
-      summary: "Duolingo API Information",
-    },
-  })
-
-  .get("/profile", async ({ query }) => {
+  }) => {
     const { username } = query;
 
     if (!username) {
@@ -134,8 +120,13 @@ export default createElysia()
       description: "Retrieves user profile, streak, XP, and course progress",
     },
   })
-
-  .get("/daily-goal", async ({ query }) => {
+  .get("/daily-goal", async ({
+    query
+  }: {
+    query: {
+      username: string;
+    };
+  }) => {
     const { username } = query;
 
     if (!username) {
@@ -169,7 +160,13 @@ export default createElysia()
     },
   })
 
-  .get("/streak", async ({ query }) => {
+  .get("/streak", async ({
+    query
+  }: {
+    query: {
+      username: string;
+    };
+  }) => {
     const { username } = query;
 
     if (!username) {

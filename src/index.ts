@@ -23,7 +23,13 @@ const api = baseElysia()
   .use(docs)
   .use(apiRoutes)
   .use(instrumentation)
-  .get("/", () => "Docs available at /docs")
+  .get("/", () => "Docs available at /docs", {
+    detail: {
+      tags: ["General"],
+      summary: "Docs endpoint",
+      description: "Endpoint for accessing API documentation.",
+    }
+  })
   .get("/ping", ({
     request,
     headers
@@ -51,6 +57,12 @@ const api = baseElysia()
         url: request.url
       }
     };
+  }, {
+    detail: {
+      tags: ["General"],
+      summary: "Ping endpoint",
+      description: "Ping endpoint for health checks and testing connectivity.",
+    }
   })
   .listen(process.env.PORT ?? 3031);
 
