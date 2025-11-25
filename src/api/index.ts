@@ -2,7 +2,9 @@ import { createElysia } from "@/libs/elysia";
 import {
   signup,
   login,
-  logout
+  logout,
+  provider,
+  providerCallback
 } from "./controller/auth";
 import {
   getAllProject,
@@ -32,10 +34,15 @@ import {
 } from "./controller/ai";
 import {
   getUser,
-  updateUser
+  updateUser,
+  uploadAvatar,
+  uploadBanner,
+  deleteAvatar,
+  deleteBanner,
+  getAvatar,
+  getBanner
 } from "./controller/user";
 import {
-  cloudinaryUpload,
   minioUpload,
   minioDownload
 } from "./controller/asset";
@@ -43,13 +50,17 @@ import {
   getYoutubeDownloader,
   getKodeWilayahPos,
   getAnime,
-  getPikachu,
+  getPokemon,
   getSpotify,
   getLinkedIn,
   getDuolingo,
   getJapaneseQuiz,
+  getFacebookDownloader,
+  getInstagramDownloader,
+  getTiktokDownloader,
+  getXDownloader,
 } from "./controller/tools";
-import analytics from "./controller/analytics";
+import publicChat from "./controller/public-chat";
 import web3 from "./controller/web3";
 
 const apiRoutes = createElysia({ prefix: "/v3" })
@@ -58,6 +69,8 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(signup)
       .use(login)
       .use(logout)
+      .use(provider)
+      .use(providerCallback)
   )
   .group("/project", (api) =>
     api
@@ -87,15 +100,21 @@ const apiRoutes = createElysia({ prefix: "/v3" })
     api
       .use(requestAIChat)
       .use(getAIChat)
+      .use(getAIChatById)
   )
   .group("/me", (api) =>
     api
       .use(getUser)
       .use(updateUser)
+      .use(uploadAvatar)
+      .use(uploadBanner)
+      .use(deleteAvatar)
+      .use(deleteBanner)
+      .use(getAvatar)
+      .use(getBanner)
   )
   .group("/asset", (api) =>
     api
-      .use(cloudinaryUpload)
       .use(minioUpload)
       .use(minioDownload)
   )
@@ -104,7 +123,11 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(getYoutubeDownloader)
       .use(getKodeWilayahPos)
       .use(getAnime)
-      .use(getPikachu)
+      .use(getPokemon)
+      .use(getFacebookDownloader)
+      .use(getInstagramDownloader)
+      .use(getTiktokDownloader)
+      .use(getXDownloader)
   )
   .group("/spotify", (api) =>
     api.use(getSpotify)
@@ -118,8 +141,8 @@ const apiRoutes = createElysia({ prefix: "/v3" })
   .group("/japanese-quiz", (api) =>
     api.use(getJapaneseQuiz)
   )
-  .group("/analytics", (api) =>
-    api.use(analytics)
+  .group("/public-chat", (api) =>
+    api.use(publicChat)
   )
   .group("/web3", (api) =>
     api.use(web3)
