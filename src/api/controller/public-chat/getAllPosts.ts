@@ -2,34 +2,41 @@ import { createElysia } from "@/libs/elysia";
 import { publicChatModel } from "@/models/publicChat.model";
 import { prismaClient } from "@/libs/prismaDatabase";
 import {
-  paginationQuerySchema,
-  createPaginatedResponse,
-  parseCursorToDate,
+  pageBasedPaginationQuerySchema,
+  PageBasedPaginationQuery,
 } from "@/utils/pagination";
-import { t } from "elysia";
+import paginationModel from "@/models/pagination.model";
 
 export default createElysia()
   .use(publicChatModel)
+  .use(paginationModel)
   .get(
     "/",
-    async ({ query }: any) => {
-      const { cursor, limit } = paginationQuerySchema.parse(query);
-      const cursorDate = parseCursorToDate(cursor);
+    async ({ query }: { query: PageBasedPaginationQuery }) => {
+      const { page, limit } = pageBasedPaginationQuerySchema.parse(query);
 
+      // Get total count
+      const total = await prismaClient.publicChatMessage.count({
+        where: {
+          deletedAt: null,
+          replyToId: null, // Only fetch top-level messages
+        },
+      });
+
+      // Calculate offset
+      const offset = (page - 1) * limit;
+
+      // Fetch paginated posts
       const posts = await prismaClient.publicChatMessage.findMany({
         where: {
           deletedAt: null,
           replyToId: null, // Only fetch top-level messages
-          ...(cursorDate && {
-            createdAt: {
-              lt: cursorDate,
-            },
-          }),
         },
         orderBy: {
           createdAt: "desc",
         },
-        take: limit + 1,
+        skip: offset,
+        take: limit,
         include: {
           user: {
             select: {
@@ -47,13 +54,7 @@ export default createElysia()
         },
       });
 
-      const paginatedResponse = createPaginatedResponse(
-        posts,
-        limit,
-        (post: any) => post.createdAt
-      );
-
-      const dataWithReplyCount = paginatedResponse.data.map((post: any) => {
+      const dataWithReplyCount = posts.map((post: any) => {
         const { _count, ...rest } = post;
         return {
           ...rest,
@@ -61,19 +62,24 @@ export default createElysia()
         };
       });
 
+      const totalPages = Math.ceil(total / limit);
+      const prev = page > 1 ? page - 1 : null;
+      const next = page < totalPages ? page + 1 : null;
+
       return {
         status: 200,
         message: "Success",
         data: dataWithReplyCount,
-        nextCursor: paginatedResponse.nextCursor,
-        hasMore: paginatedResponse.hasMore,
+        page,
+        limit,
+        total,
+        totalPages,
+        prev,
+        next,
       };
     },
     {
-      query: t.Object({
-        cursor: t.Optional(t.String()),
-        limit: t.Optional(t.Number({ minimum: 1, maximum: 50, default: 10 })),
-      }),
+      query: "pagination.page-based.query.model",
       detail: {
         tags: ["Public Chat"],
         summary: "Get all public chat messages",

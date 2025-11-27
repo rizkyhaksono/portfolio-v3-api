@@ -1,10 +1,9 @@
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
 import {
-  paginationQuerySchema,
-  createPaginatedResponse,
-  parseCursorToDate,
-  PaginationQuery,
+  pageBasedPaginationQuerySchema,
+  createPageBasedPaginatedResponse,
+  PageBasedPaginationQuery,
 } from "@/utils/pagination";
 import paginationModel from "@/models/pagination.model";
 
@@ -13,38 +12,42 @@ export default createElysia()
   .get("/", async ({
     query
   }: {
-    query: PaginationQuery
+    query: PageBasedPaginationQuery
   }) => {
-    const { cursor, limit } = paginationQuerySchema.parse(query);
-    const cursorDate = parseCursorToDate(cursor);
+    const { page, limit } = pageBasedPaginationQuerySchema.parse(query);
 
+    // Get total count
+    const total = await prismaClient.project.count();
+
+    // Calculate offset
+    const offset = (page - 1) * limit;
+
+    // Fetch paginated projects
     const projects = await prismaClient.project.findMany({
-      where: cursorDate
-        ? {
-          created_at: {
-            lt: cursorDate,
-          },
-        }
-        : undefined,
       orderBy: {
         created_at: "desc",
       },
-      take: limit + 1,
+      skip: offset,
+      take: limit,
     });
 
-    const paginatedResponse = createPaginatedResponse(
-      projects,
-      limit,
-      (project) => project.created_at
-    );
+    const totalPages = Math.ceil(total / limit);
+    const prev = page > 1 ? page - 1 : null;
+    const next = page < totalPages ? page + 1 : null;
 
     return {
       status: 200,
       message: "Success",
-      ...paginatedResponse,
+      data: projects,
+      page,
+      limit,
+      total,
+      totalPages,
+      prev,
+      next,
     };
   }, {
-    query: "pagination.query.model",
+    query: "pagination.page-based.query.model",
     detail: {
       tags: ["Project"],
       summary: "Get all projects",

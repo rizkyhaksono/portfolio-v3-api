@@ -1,8 +1,7 @@
 import { createElysia } from "@/libs/elysia";
 import {
-  PaginationQuery,
-  paginationQuerySchema,
-  parseCursorToNumber,
+  PageBasedPaginationQuery,
+  pageBasedPaginationQuerySchema,
 } from "@/utils/pagination";
 import logger from "@/libs/lokiLogger";
 import pokemonModel from "@/models/pokemon.model";
@@ -12,13 +11,13 @@ import { Pokemon } from "@/types/pokemon";
 export default createElysia()
   .use(pokemonModel)
   .use(paginationModel)
-  .get("/pokemon", async ({ query }: { query: PaginationQuery }) => {
-    const { cursor, limit } = paginationQuerySchema.parse(query);
-    const offset = parseCursorToNumber(cursor) || 0;
+  .get("/pokemon", async ({ query }: { query: PageBasedPaginationQuery }) => {
+    const { page, limit } = pageBasedPaginationQuerySchema.parse(query);
+    const offset = (page - 1) * limit;
 
     try {
       const response = await fetch(
-        `https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit + 1}`
+        `https://pokeapi.co/api/v2/pokemon?offset=${offset}&limit=${limit}`
       );
 
       if (!response.ok) throw new Error("Failed to fetch Pokemon data");
@@ -27,7 +26,7 @@ export default createElysia()
       const pokemonList: Pokemon[] = data.results;
 
       const detailedPokemon = await Promise.all(
-        pokemonList.slice(0, limit).map(async (pokemon: Pokemon) => {
+        pokemonList.map(async (pokemon: Pokemon) => {
           try {
             const detailResponse = await fetch(pokemon.url);
             const detail = await detailResponse.json();
@@ -56,16 +55,21 @@ export default createElysia()
         })
       );
 
-      const hasMore = pokemonList.length > limit;
-      const nextOffset = hasMore ? offset + limit : null;
+      const total = data.count;
+      const totalPages = Math.ceil(total / limit);
+      const prev = page > 1 ? page - 1 : null;
+      const next = page < totalPages ? page + 1 : null;
 
       return {
         status: 200,
         message: "Success",
         data: detailedPokemon,
-        nextCursor: nextOffset ? Buffer.from(String(nextOffset)).toString("base64") : null,
-        hasMore,
-        total: data.count,
+        page,
+        limit,
+        total,
+        totalPages,
+        prev,
+        next,
       };
     } catch (error) {
       logger.error({
@@ -77,7 +81,7 @@ export default createElysia()
     }
   },
     {
-      query: "pagination.query.model",
+      query: "pagination.page-based.query.model",
       response: "pokemon.response.model",
       detail: {
         tags: ["Pokemon"],
