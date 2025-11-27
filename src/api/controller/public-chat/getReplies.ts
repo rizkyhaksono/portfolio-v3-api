@@ -2,20 +2,20 @@ import { createElysia } from "@/libs/elysia";
 import { publicChatModel } from "@/models/publicChat.model";
 import { prismaClient } from "@/libs/prismaDatabase";
 import {
-  paginationQuerySchema,
-  createPaginatedResponse,
-  parseCursorToDate,
+  pageBasedPaginationQuerySchema,
+  PageBasedPaginationQuery,
 } from "@/utils/pagination";
 import { NotFoundException } from "@/constants/exceptions";
 import { t } from "elysia";
+import paginationModel from "@/models/pagination.model";
 
 export default createElysia()
   .use(publicChatModel)
+  .use(paginationModel)
   .get(
     "/:id/replies",
-    async ({ params: { id }, query }: any) => {
-      const { cursor, limit } = paginationQuerySchema.parse(query);
-      const cursorDate = parseCursorToDate(cursor);
+    async ({ params: { id }, query }: { params: { id: string }; query: PageBasedPaginationQuery }) => {
+      const { page, limit } = pageBasedPaginationQuerySchema.parse(query);
 
       const parentMessage = await prismaClient.publicChatMessage.findFirst({
         where: {
@@ -28,20 +28,28 @@ export default createElysia()
         throw new NotFoundException("Message not found");
       }
 
+      // Get total count of replies
+      const total = await prismaClient.publicChatMessage.count({
+        where: {
+          replyToId: id,
+          deletedAt: null,
+        },
+      });
+
+      // Calculate offset
+      const offset = (page - 1) * limit;
+
+      // Fetch paginated replies
       const replies = await prismaClient.publicChatMessage.findMany({
         where: {
           replyToId: id,
           deletedAt: null,
-          ...(cursorDate && {
-            createdAt: {
-              lt: cursorDate,
-            },
-          }),
         },
         orderBy: {
           createdAt: "desc",
         },
-        take: limit + 1,
+        skip: offset,
+        take: limit,
         include: {
           user: {
             select: {
@@ -54,26 +62,27 @@ export default createElysia()
         },
       });
 
-      const paginatedResponse = createPaginatedResponse(
-        replies,
-        limit,
-        (reply: any) => reply.createdAt
-      );
+      const totalPages = Math.ceil(total / limit);
+      const prev = page > 1 ? page - 1 : null;
+      const next = page < totalPages ? page + 1 : null;
 
       return {
         status: 200,
         message: "Success",
-        ...paginatedResponse,
+        data: replies,
+        page,
+        limit,
+        total,
+        totalPages,
+        prev,
+        next,
       };
     },
     {
       params: t.Object({
         id: t.String(),
       }),
-      query: t.Object({
-        cursor: t.Optional(t.String()),
-        limit: t.Optional(t.Number({ minimum: 1, maximum: 50, default: 10 })),
-      }),
+      query: "pagination.page-based.query.model",
       detail: {
         tags: ["Public Chat"],
         summary: "Get replies for a message",

@@ -1,56 +1,52 @@
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
 import {
-  paginationQuerySchema,
-  createPaginatedResponse,
-  parseCursorToDate,
+  pageBasedPaginationQuerySchema,
+  PageBasedPaginationQuery,
 } from "@/utils/pagination";
-import { t } from "elysia";
-import workModel from "@/models/work.model";
+import paginationModel from "@/models/pagination.model";
 
 export default createElysia()
-  .use(workModel)
+  .use(paginationModel)
   .get("/", async ({
     query
   }: {
-    query: {
-      cursor?: string;
-      limit?: number;
-    }
+    query: PageBasedPaginationQuery
   }) => {
-    const { cursor, limit } = paginationQuerySchema.parse(query);
-    const cursorDate = parseCursorToDate(cursor);
+    const { page, limit } = pageBasedPaginationQuerySchema.parse(query);
 
+    // Get total count
+    const total = await prismaClient.work.count();
+
+    // Calculate offset
+    const offset = (page - 1) * limit;
+
+    // Fetch paginated work records
     const work = await prismaClient.work.findMany({
-      where: cursorDate
-        ? {
-          created_at: {
-            lt: cursorDate,
-          },
-        }
-        : undefined,
       orderBy: {
         created_at: "desc",
       },
-      take: limit + 1,
+      skip: offset,
+      take: limit,
     });
 
-    const paginatedResponse = createPaginatedResponse(
-      work,
-      limit,
-      (w) => w.created_at
-    );
+    const totalPages = Math.ceil(total / limit);
+    const prev = page > 1 ? page - 1 : null;
+    const next = page < totalPages ? page + 1 : null;
 
     return {
       status: 200,
       message: "Success",
-      ...paginatedResponse,
+      data: work,
+      page,
+      limit,
+      total,
+      totalPages,
+      prev,
+      next,
     };
   }, {
-    query: t.Object({
-      cursor: t.Optional(t.String()),
-      limit: t.Optional(t.Number({ minimum: 1, maximum: 50, default: 10 })),
-    }),
+    query: "pagination.page-based.query.model",
     detail: {
       tags: ["Work"],
       summary: "Get all work experience",
