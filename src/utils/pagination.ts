@@ -1,96 +1,52 @@
 import { z } from "zod";
 
 /**
- * Cursor-based pagination utility following Elysia pagination rules
+ * Page-based pagination query schema
  */
-export const paginationQuerySchema = z.object({
-  cursor: z.string().optional(),
+export const pageBasedPaginationQuerySchema = z.object({
+  page: z.coerce.number().min(1).default(1),
   limit: z.coerce.number().min(1).max(50).default(10),
 });
 
-export type PaginationQuery = z.infer<typeof paginationQuerySchema>;
+export type PageBasedPaginationQuery = z.infer<typeof pageBasedPaginationQuerySchema>;
 
-export interface PaginatedResponse<T> {
+/**
+ * Page-based pagination response interface
+ */
+export interface PageBasedPaginatedResponse<T> {
   data: T[];
-  nextCursor: string | null;
-  hasMore: boolean;
-  total?: number;
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  prev: number | null;
+  next: number | null;
 }
 
 /**
- * Encode cursor for pagination (base64 encoded timestamp or id)
+ * Create page-based paginated response
  */
-export function encodeCursor(value: Date | string | number): string {
-  const str = value instanceof Date ? value.toISOString() : String(value);
-  return Buffer.from(str).toString("base64");
-}
+export function createPageBasedPaginatedResponse<T>(
+  allItems: T[],
+  page: number,
+  limit: number
+): PageBasedPaginatedResponse<T> {
+  const total = allItems.length;
+  const totalPages = Math.ceil(total / limit);
+  const offset = (page - 1) * limit;
 
-/**
- * Decode cursor from base64
- */
-export function decodeCursor(cursor: string): string {
-  try {
-    return Buffer.from(cursor, "base64").toString("utf-8");
-  } catch {
-    throw new Error("Invalid cursor format");
-  }
-}
+  const data = allItems.slice(offset, offset + limit);
 
-/**
- * Create paginated response
- */
-export function createPaginatedResponse<T>(
-  items: T[],
-  limit: number,
-  getCursorValue: (item: T) => Date | string | number
-): PaginatedResponse<T> {
-  const hasMore = items.length > limit;
-  const data = hasMore ? items.slice(0, limit) : items;
-  const nextCursor = hasMore ? encodeCursor(getCursorValue(items[limit - 1])) : null;
+  const prev = page > 1 ? page - 1 : null;
+  const next = page < totalPages ? page + 1 : null;
 
   return {
     data,
-    nextCursor,
-    hasMore,
+    page,
+    limit,
+    total,
+    totalPages,
+    prev,
+    next,
   };
-}
-
-/**
- * Parse cursor to Date object (for timestamp-based cursors)
- */
-export function parseCursorToDate(cursor?: string): Date | undefined {
-  if (!cursor) return undefined;
-
-  try {
-    const decoded = decodeCursor(cursor);
-    const date = new Date(decoded);
-
-    if (isNaN(date.getTime())) {
-      throw new Error("Invalid date in cursor");
-    }
-
-    return date;
-  } catch {
-    throw new Error("Invalid cursor format");
-  }
-}
-
-/**
- * Parse cursor to number (for id-based cursors)
- */
-export function parseCursorToNumber(cursor?: string): number | undefined {
-  if (!cursor) return undefined;
-
-  try {
-    const decoded = decodeCursor(cursor);
-    const num = parseInt(decoded, 10);
-
-    if (isNaN(num)) {
-      throw new Error("Invalid number in cursor");
-    }
-
-    return num;
-  } catch {
-    throw new Error("Invalid cursor format");
-  }
 }
