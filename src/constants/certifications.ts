@@ -1,6 +1,10 @@
+import ShortUniqueId from "short-unique-id";
+
+const { randomUUID } = new ShortUniqueId({ length: 20 });
+
 export const LINKEDIN_CERTIFICATIONS_DATA = [
   {
-    id: 1,
+    id: randomUUID(),
     title: "Course Completed: AWS For Front-End Engineers, v2",
     provider: "Frontend Masters",
     issued: new Date("2025-11-26"),
@@ -9,7 +13,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://static.frontendmasters.com/ud/c/3b4b29892a/wzSBGZLtYJ/aws-v2.pdf",
   },
   {
-    id: 2,
+    id: randomUUID(),
     title: "AWS Educate Introduction to Generative AI",
     provider: "Amazon Web Services (AWS)",
     issued: new Date("2025-07-01"),
@@ -18,7 +22,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.credly.com/badges/37f9767a-0a97-4d9e-a7fd-666edd600d4e/linked_in_profile",
   },
   {
-    id: 3,
+    id: randomUUID(),
     title: "Financial Literacy 101",
     provider: "Dicoding Indonesia",
     issued: new Date("2025-05-26"),
@@ -27,7 +31,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.dicoding.com/certificates/2VX3KDLR3XYQ",
   },
   {
-    id: 4,
+    id: randomUUID(),
     title: "Automate Data Capture at Scale with Document AI",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -36,7 +40,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13897194?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 5,
+    id: randomUUID(),
     title: "Boost Productivity with Gemini in BigQuery",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -45,7 +49,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13907200?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 6,
+    id: randomUUID(),
     title: "Explore Generative AI with the Vertex AI Gemini API",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -54,7 +58,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13799083?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 7,
+    id: randomUUID(),
     title: "Gemini for Data Scientists and Analysts",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -63,7 +67,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13806637?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 8,
+    id: randomUUID(),
     title: "Get Started with Sensitive Data Protection",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -72,7 +76,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13783812?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 9,
+    id: randomUUID(),
     title: "Google Developer Essentials",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -81,7 +85,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13860561?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 10,
+    id: randomUUID(),
     title: "Inspect Rich Documents with Gemini Multimodality and Multimodal RAG",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -90,7 +94,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13905425?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 11,
+    id: randomUUID(),
     title: "Prepare Data for ML APIs on Google Cloud",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -99,7 +103,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13783450?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 12,
+    id: randomUUID(),
     title: "Secure BigLake Data",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -108,7 +112,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13798526?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 13,
+    id: randomUUID(),
     title: "Secure Software Delivery",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -117,7 +121,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13806462?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 14,
+    id: randomUUID(),
     title: "The Basics of Google Cloud Compute",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -126,7 +130,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13787639?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 15,
+    id: randomUUID(),
     title: "Work with Gemini Models in BigQuery",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -135,7 +139,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13861321?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 16,
+    id: randomUUID(),
     title: "Workspace: Add-ons",
     provider: "Google",
     issued: new Date("2025-02-26"),
@@ -144,7 +148,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13811500?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 17,
+    id: randomUUID(),
     title: "Belajar Dasar AI",
     provider: "Dicoding Indonesia",
     issued: new Date("2025-01-26"),
@@ -153,7 +157,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.dicoding.com/certificates/1OP82D5G8PQK",
   },
   {
-    id: 18,
+    id: randomUUID(),
     title: "Belajar Membuat Aplikasi Android untuk Pemula",
     provider: "Dicoding Indonesia",
     issued: new Date("2025-01-26"),
@@ -162,7 +166,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.dicoding.com/certificates/6RPNR6GN4X2M",
   },
   {
-    id: 19,
+    id: randomUUID(),
     title: "Build Real World AI Applications with Gemini and Imagen",
     provider: "Google",
     issued: new Date("2025-01-26"),
@@ -171,7 +175,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13769256?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 20,
+    id: randomUUID(),
     title: "Memulai Pemrograman dengan Kotlin",
     provider: "Dicoding Indonesia",
     issued: new Date("2025-01-26"),
@@ -180,7 +184,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.dicoding.com/certificates/GRX53L4KVZ0M",
   },
   {
-    id: 21,
+    id: randomUUID(),
     title: "Prompt Design in Vertex AI",
     provider: "Google",
     issued: new Date("2025-01-26"),
@@ -189,7 +193,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.skills.google/public_profiles/e96be0fc-2936-4ec1-8d7c-162cc49d3ade/badges/13762799?utm_medium=social&utm_source=linkedin&utm_campaign=ql-social-share",
   },
   {
-    id: 22,
+    id: randomUUID(),
     title: "Typescript in React: Get started",
     provider: "Coursera",
     issued: new Date("2025-01-26"),
@@ -198,7 +202,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: "https://www.coursera.org/account/accomplishments/verify/BC28MMNJ3DFM",
   },
   {
-    id: 23,
+    id: randomUUID(),
     title: "GDG DevFest 2024",
     provider: "Google Developers Group",
     issued: new Date("2024-12-26"),
@@ -207,7 +211,7 @@ export const LINKEDIN_CERTIFICATIONS_DATA = [
     link: null,
   },
   {
-    id: 24,
+    id: randomUUID(),
     title: "Analyze Images with the Cloud Vision API Skill Badge",
     provider: "Google",
     issued: new Date("2024-08-26"),
