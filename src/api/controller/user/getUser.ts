@@ -25,8 +25,8 @@ export default createElysia()
         headline: true,
         location: true,
         oauthAccounts: true,
-        created_at: true,
-        updated_at: true,
+        createdAt: true,
+        updatedAt: true,
       }
     });
 
