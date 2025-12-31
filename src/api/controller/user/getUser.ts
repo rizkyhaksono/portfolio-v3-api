@@ -16,6 +16,7 @@ export default createElysia()
         email: true,
         name: true,
         about: true,
+        iconUrl: true,
         emailVerified: true,
         avatarMinioKey: true,
         avatarUrl: true,

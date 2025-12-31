@@ -69,13 +69,28 @@ export default createElysia().get(
 
       switch (provider) {
         case "google": {
+          logger.info({
+            message: "Validating Google authorization code",
+            codeLength: code.length,
+            codeVerifierLength: codeVerifier.length,
+          });
+          
           tokens = await (providerInstance as any).validateAuthorizationCode(code, codeVerifier);
+          
+          logger.info({
+            message: "Google tokens received successfully",
+          });
+          
+          const accessToken = tokens.accessToken();
+          
           const response = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
             headers: {
-              Authorization: `Bearer ${tokens.accessToken}`,
+              Authorization: `Bearer ${accessToken}`,
             },
           });
+          
           const data = (await response.json()) as GoogleUserInfo;
+          
           userInfo = {
             email: data.email,
             name: data.name,
@@ -90,7 +105,7 @@ export default createElysia().get(
           tokens = await (providerInstance as any).validateAuthorizationCode(code, codeVerifier);
           const response = await fetch("https://api.github.com/user", {
             headers: {
-              Authorization: `Bearer ${tokens.accessToken}`,
+              Authorization: `Bearer ${tokens.accessToken()}`,
             },
           });
           const data = (await response.json()) as GitHubUserInfo;
@@ -100,7 +115,7 @@ export default createElysia().get(
           if (!email) {
             const emailResponse = await fetch("https://api.github.com/user/emails", {
               headers: {
-                Authorization: `Bearer ${tokens.accessToken}`,
+                Authorization: `Bearer ${tokens.accessToken()}`,
               },
             });
             const emails = await emailResponse.json() as Array<{ email: string; primary: boolean; verified: boolean }>;
@@ -126,7 +141,7 @@ export default createElysia().get(
           tokens = await (providerInstance as any).validateAuthorizationCode(code, codeVerifier);
           const response = await fetch("https://discord.com/api/users/@me", {
             headers: {
-              Authorization: `Bearer ${tokens.accessToken}`,
+              Authorization: `Bearer ${tokens.accessToken()}`,
             },
           });
           const data = (await response.json()) as DiscordUserInfo;
@@ -146,7 +161,7 @@ export default createElysia().get(
             "https://graph.facebook.com/me?fields=id,name,email,picture",
             {
               headers: {
-                Authorization: `Bearer ${tokens.accessToken}`,
+                Authorization: `Bearer ${tokens.accessToken()}`,
               },
             }
           );
@@ -165,7 +180,6 @@ export default createElysia().get(
           throw new BadRequestException(`Unsupported provider: ${provider}`);
       }
 
-      // Handle user creation/login
       const user = await handleOAuthUser(userInfo);
       const sessionCookie = await createUserSession(user.id);
 
@@ -178,15 +192,26 @@ export default createElysia().get(
       // Clear OAuth cookies
       cookie.oauth_state.remove();
       cookie.oauth_code_verifier.remove();
-
+      
       logger.info({
         message: "OAuth authentication successful",
         provider,
         userId: user.id,
+        sessionId: sessionCookie.value,
       });
 
-      // Redirect to frontend
-      set.redirect = Bun.env.FRONTEND_URL || "http://localhost:3000";
+      // Redirect to frontend with token in URL
+      const frontendUrl = Bun.env.FRONTEND_URL || "http://localhost:3000";
+      const callbackUrl = `${frontendUrl}/auth/callback?token=${sessionCookie.value}`;
+      set.redirect = callbackUrl;
+      set.status = 302;
+      
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: callbackUrl
+        }
+      });
     } catch (error) {
       logger.error({
         message: "OAuth authentication failed",
