@@ -17,7 +17,6 @@ export default createElysia().get(
     const state = generateState();
     const codeVerifier = generateCodeVerifier();
 
-    // Store state and code verifier in cookies
     cookie.oauth_state.set({
       value: state,
       httpOnly: true,
@@ -36,12 +35,9 @@ export default createElysia().get(
 
     let authUrl: URL;
 
-    // Generate authorization URL based on provider
     switch (provider) {
       case "google":
-        authUrl = await (providerInstance as any).createAuthorizationURL(state, codeVerifier, {
-          scopes: ["profile", "email"],
-        });
+        authUrl = await (providerInstance as any).createAuthorizationURL(state, codeVerifier, ["openid", "profile", "email"]);
         break;
       case "github":
         authUrl = await (providerInstance as any).createAuthorizationURL(state, codeVerifier, ["user:email"]);
@@ -59,9 +55,15 @@ export default createElysia().get(
     logger.info({
       message: "OAuth flow initiated",
       provider,
+      redirectUrl: authUrl.toString(),
     });
 
-    set.redirect = authUrl.toString();
+    set.status = 302;
+    set.headers = {
+      Location: authUrl.toString(),
+    };
+
+    return null;
   },
   {
     params: t.Object({

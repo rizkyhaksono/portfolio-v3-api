@@ -17,8 +17,10 @@ const api = baseElysia()
       "natee.my.id",
       "http://localhost:3000",
       "localhost:3000",
+      "http://localhost:3000",
     ],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   }))
   .use(docs)
   .use(apiRoutes)

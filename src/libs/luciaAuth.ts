@@ -1,5 +1,5 @@
 import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
-import type { User } from "@prisma/client";
+import type { User } from "../../generated/prisma/browser";
 import { Lucia } from "lucia";
 import { prismaClient } from "./prismaDatabase";
 
@@ -7,8 +7,11 @@ const adapter = new PrismaAdapter(prismaClient.session, prismaClient.user);
 
 const lucia = new Lucia(adapter, {
   sessionCookie: {
+    name: "auth_session",
+    expires: true,
     attributes: {
       secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
     }
   },
   getUserAttributes: (attributes) => {

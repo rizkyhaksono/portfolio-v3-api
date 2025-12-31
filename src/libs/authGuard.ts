@@ -19,11 +19,12 @@ const authGuard = new Elysia({
     host: t.Optional(t.String()),
     authorization: t.Optional(t.String())
   })
-}).resolve({ as: "scoped" }, async ({ cookie, headers: { origin, host, authorization }, request: { method } }: any): Promise<{ user: User }> => {
+}).resolve({ as: "scoped" }, async ({ cookie, headers: { origin, host, authorization }, request: { method, headers } }: any): Promise<{ user: User }> => {
   const sessionCookie = cookie[sessionCookieName];
 
   let sessionId: string | null | undefined = null;
 
+  // First try to get token from Authorization header
   if (authorization) {
     const bearerToken = lucia.readBearerToken(authorization);
     if (bearerToken) {
@@ -31,7 +32,20 @@ const authGuard = new Elysia({
     }
   }
 
+  // Then try from cookie object
   if (!sessionId) sessionId = sessionCookie?.value;
+
+  // Finally, try to parse from Cookie header string (for cross-origin requests)
+  if (!sessionId) {
+    const cookieHeader = headers.get("cookie");
+    if (cookieHeader) {
+      const cookies = cookieHeader.split(";").map((c: string) => c.trim());
+      const sessionCookieStr = cookies.find((c: string) => c.startsWith(`${sessionCookieName}=`));
+      if (sessionCookieStr) {
+        sessionId = sessionCookieStr.split("=")[1];
+      }
+    }
+  }
 
   if (
     !authorization &&
