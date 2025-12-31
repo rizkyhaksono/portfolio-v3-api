@@ -1,10 +1,11 @@
 # Portfolio v3 API
 
-A modern, high-performance backend API built with **Elysia.js** and **Bun**, providing comprehensive services for portfolio management, authentication, social media integration, Web3 functionality, and more.
+This is the backend API for my portfolio, built with Elysia.js and Bun. It handles everything from authentication and portfolio management to social media integrations and Web3 features. I designed it to be fast, scalable, and easy to work with.
 
 ## Features
 
 ### Authentication & Authorization
+
 - **Multi-Provider OAuth 2.0** (Google, GitHub, Discord, Facebook)
 - **Email Conflict Prevention** - Prevents login with different providers using the same email
 - **Role-Based Access Control** (Admin, User, Guest)
@@ -12,6 +13,7 @@ A modern, high-performance backend API built with **Elysia.js** and **Bun**, pro
 - **Cookie & Bearer Token** authentication
 
 ### Core Features
+
 - **Public Chat System** - Users can post once per day with edit and soft delete capabilities
 - **Cursor-Based Pagination** - Efficient pagination for all list endpoints
 - **Image Management** - Upload avatars and banners with Minio, auto-delete old images
@@ -19,12 +21,14 @@ A modern, high-performance backend API built with **Elysia.js** and **Bun**, pro
 - **Grafana Loki Integration** - Comprehensive logging and monitoring
 
 ### Portfolio Management
+
 - **Projects** - Showcase your work with full CRUD operations
 - **Work Experience** - Track your professional journey
 - **Education** - Manage academic background
 - **AI Chat** - Powered by Google Generative AI
 
 ### Integrations
+
 - **Pokemon Database** - Full Pokemon data with pagination
 - **Web3 Support**
   - Wallet balance checking (Ethereum, Polygon, BSC, Arbitrum, Optimism)
@@ -59,22 +63,25 @@ A modern, high-performance backend API built with **Elysia.js** and **Bun**, pro
 - [Bun](https://bun.sh/) v1.0+
 - PostgreSQL database
 - Minio instance (for file storage)
-- Optional:  Grafana Loki instance
+- Optional: Grafana Loki instance
 
 ## Quick Start
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/rizkyhaksono/portfolio-v3-api.git
 cd portfolio-v3-api
 ```
 
 ### 2. Install dependencies
+
 ```bash
 bun install
 ```
 
 ### 3. Set up environment variables
+
 Create a `.env` file in the root directory:
 
 ```env
@@ -126,11 +133,13 @@ ALCHEMY_API_KEY=your-alchemy-key
 ```
 
 ### 4. Run database migrations
+
 ```bash
 bunx prisma migrate dev
 ```
 
 ### 5. Start the development server
+
 ```bash
 bun dev
 ```
@@ -140,24 +149,29 @@ The API will be available at `http://localhost:3121`
 ## API Documentation
 
 Interactive API documentation is available at:
+
 - **Scalar UI**: `http://localhost:3121/docs` (recommended)
 - **Swagger JSON**: `http://localhost:3121/docs/json`
 
 ## Authentication Flow
 
 ### OAuth Authentication
+
 1. Initiate OAuth: `GET /v3/auth/{provider}` (google, github, discord, facebook)
 2. User authorizes on provider's site
 3. Callback: `GET /v3/auth/{provider}/callback`
 4. Session cookie is set automatically
 
 ### Traditional Authentication
+
 - **Sign up**: `POST /v3/auth/signup`
 - **Login**: `POST /v3/auth/login`
 - **Logout**: `POST /v3/auth/logout`
 
 ### Using the API
+
 Include authentication in requests:
+
 ```bash
 # Using Bearer token
 curl -H "Authorization: Bearer YOUR_SESSION_TOKEN" http://localhost:3121/v3/me
@@ -179,6 +193,7 @@ GET /v3/projects?cursor=BASE64_CURSOR&limit=10
 ```
 
 Response format:
+
 ```json
 {
   "status": 200,
@@ -192,38 +207,45 @@ Response format:
 ## Key Endpoints
 
 ### Authentication
+
 - `GET /v3/auth/{provider}` - OAuth initiation
 - `POST /v3/auth/signup` - User registration
 - `POST /v3/auth/login` - User login
 - `POST /v3/auth/logout` - User logout
 
 ### Public Chat
+
 - `GET /v3/public-chat` - Get all posts (paginated, public)
 - `POST /v3/public-chat` - Create post (1 per day limit)
 - `PATCH /v3/public-chat/:id` - Update own post
 - `DELETE /v3/public-chat/:id` - Soft delete own post
 
 ### User Profile
+
 - `GET /v3/me` - Get current user
 - `PATCH /v3/me` - Update profile
 - `POST /v3/me/avatar` - Upload avatar
 - `POST /v3/me/banner` - Upload banner
 
 ### Portfolio
+
 - `GET /v3/projects` - List projects (paginated)
 - `GET /v3/work` - List work experience (paginated)
 - `GET /v3/education` - List education (paginated)
 
 ### Pokemon
+
 - `GET /v3/tools/pokemon` - List Pokemon (paginated)
 - `GET /v3/tools/pokemon/:id` - Get Pokemon details
 
 ### Web3
+
 - `GET /v3/web3/wallet/:address` - Check wallet balance
 - `GET /v3/web3/crypto/price` - Get crypto prices
 - `GET /v3/web3/crypto/:coin/chart` - Get price charts
 
 ### Social Media Downloaders
+
 - `GET /v3/tools/youtube/info` - YouTube video info
 - `GET /v3/tools/tiktok/downloader` - TikTok downloader
 - `GET /v3/tools/instagram/downloader` - Instagram downloader
@@ -279,9 +301,10 @@ portfolio-v3-api/
 ## Author
 
 **Rizky Haksono**
+
 - GitHub: [@rizkyhaksono](https://github.com/rizkyhaksono)
 - Email: mrizkyhaksono@gmail.com
 
 ---
 
-Built with ❤️ using Bun and Elysia.js
+Built using Bun and Elysia.js
