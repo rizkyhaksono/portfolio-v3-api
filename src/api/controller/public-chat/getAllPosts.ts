@@ -33,7 +33,7 @@ export default createElysia()
           replyToId: null, // Only fetch top-level messages
         },
         orderBy: {
-          createdAt: "desc",
+          createdAt: "asc",
         },
         skip: offset,
         take: limit,
@@ -43,7 +43,9 @@ export default createElysia()
               id: true,
               name: true,
               avatarUrl: true,
+              iconUrl: true,
               headline: true,
+              role: true,
             },
           },
           _count: {
