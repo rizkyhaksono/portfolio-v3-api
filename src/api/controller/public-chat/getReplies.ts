@@ -46,7 +46,7 @@ export default createElysia()
           deletedAt: null,
         },
         orderBy: {
-          createdAt: "desc",
+          createdAt: "asc",
         },
         skip: offset,
         take: limit,
