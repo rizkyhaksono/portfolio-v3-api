@@ -13,6 +13,8 @@ const api = baseElysia()
       "rizkyhaksono.natee.my.id",
       "https://nateee.com",
       "nateee.com",
+      "https://azure.nateee.com",
+      "azure.nateee.com",
       "https://natee.my.id",
       "natee.my.id",
       "http://localhost:3000",
