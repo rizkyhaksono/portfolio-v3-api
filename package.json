@@ -20,7 +20,7 @@
     "arctic": "^2.3.4",
     "elysia": "latest",
     "ethers": "^6.15.0",
-    "file-type": "^20.5.0",
+    "file-type": "^21.3.1",
     "logestic": "^1.2.4",
     "lucia": "^3.2.2",
     "minio": "^8.0.6",
