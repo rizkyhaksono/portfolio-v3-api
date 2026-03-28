@@ -1,95 +1,45 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
-
-interface IPApiResponse {
-  status: "success" | "fail";
-  message?: string;
-  country: string;
-  countryCode: string;
-  region: string;
-  regionName: string;
-  city: string;
-  zip: string;
-  lat: number;
-  lon: number;
-  timezone: string;
-  isp: string;
-  org: string;
-  as: string;
-  query: string;
-}
-
-function isValidIP(ip: string): boolean {
-  // IPv4
-  const ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/;
-  // IPv6 (simplified)
-  const ipv6 = /^[0-9a-fA-F:]+$/;
-  return ipv4.test(ip) || ipv6.test(ip);
-}
+import { lookupIP, isValidIP } from "@/utils/ipGeoLookup";
 
 export default createElysia().get(
   "/ip",
-  async ({ query, request }: { query: { address?: string }; request: Request }) => {
-    let ip = query.address?.trim();
+  async ({
+    query,
+    request,
+    server,
+  }: {
+    query: { address?: string };
+    request: Request;
+    server: any;
+  }) => {
+    const ip =
+      query.address?.trim() ??
+      request.headers.get("cf-connecting-ip") ??
+      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+      request.headers.get("x-real-ip") ??
+      server?.requestIP(request)?.address ??
+      "";
 
-    // Fall back to requester's IP
     if (!ip) {
-      ip =
-        request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-        request.headers.get("x-real-ip") ??
-        "1.1.1.1"; // last resort public IP
+      return { status: 400, message: "Could not determine IP address", data: null };
     }
 
     if (!isValidIP(ip)) {
+      return { status: 400, message: "Invalid IP address format", data: null };
+    }
+
+    const geo = await lookupIP(ip);
+
+    if (!geo) {
       return {
         status: 400,
-        message: "Invalid IP address format",
+        message: "IP lookup failed — address may be private or invalid",
         data: null,
       };
     }
 
-    try {
-      const res = await fetch(
-        `http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query`,
-      );
-
-      if (!res.ok) throw new Error(`ip-api error: ${res.status}`);
-
-      const data: IPApiResponse = await res.json();
-
-      if (data.status === "fail") {
-        return {
-          status: 400,
-          message: data.message ?? "IP lookup failed",
-          data: null,
-        };
-      }
-
-      return {
-        status: 200,
-        message: "Success",
-        data: {
-          ip: data.query,
-          country: data.country,
-          countryCode: data.countryCode,
-          region: data.regionName,
-          regionCode: data.region,
-          city: data.city,
-          zip: data.zip,
-          timezone: data.timezone,
-          coordinates: { lat: data.lat, lon: data.lon },
-          isp: data.isp,
-          org: data.org,
-          asn: data.as,
-        },
-      };
-    } catch (error: any) {
-      return {
-        status: 400,
-        message: error.message ?? "Failed to fetch IP info",
-        data: null,
-      };
-    }
+    return { status: 200, message: "Success", data: geo };
   },
   {
     query: t.Object({

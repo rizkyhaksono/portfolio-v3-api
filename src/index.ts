@@ -3,6 +3,7 @@ import cors from "@elysiajs/cors";
 import apiRoutes from "./api";
 import { docs } from "./libs/swagger";
 import { instrumentation } from "./libs/instrumentation";
+import { lookupIP } from "./utils/ipGeoLookup";
 
 const api = baseElysia()
   .use(cors({
@@ -34,18 +35,29 @@ const api = baseElysia()
       description: "Endpoint for accessing API documentation.",
     }
   })
-  .get("/ping", ({
+  .get("/ping", async ({
     request,
-    headers
+    headers,
+    server,
   }: {
     request: Request;
     headers: Record<string, string>;
+    server: any;
   }) => {
+    // Priority: Cloudflare → X-Forwarded-For (first hop) → X-Real-IP → socket IP
+    const ip =
+      headers['cf-connecting-ip'] ??
+      headers['x-forwarded-for']?.split(',')[0].trim() ??
+      headers['x-real-ip'] ??
+      server?.requestIP(request)?.address ??
+      'Unknown';
+
     const userAgent = headers['user-agent'] ?? 'Unknown';
-    const ip = headers['x-forwarded-for'] ?? headers['x-real-ip'] ?? 'Unknown';
     const host = headers['host'] ?? 'Unknown';
     const referer = headers['referer'] ?? 'Direct access';
     const acceptLanguage = headers['accept-language'] ?? 'Unknown';
+
+    const geo = await lookupIP(ip);
 
     return {
       status: 200,
@@ -58,7 +70,8 @@ const api = baseElysia()
         referer: referer,
         language: acceptLanguage,
         method: request.method,
-        url: request.url
+        url: request.url,
+        geolocation: geo,
       }
     };
   }, {
