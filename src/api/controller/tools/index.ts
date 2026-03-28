@@ -10,6 +10,14 @@ import getFacebookDownloader from "./getFacebookDownloader";
 import getInstagramDownloader from "./getInstagramDownloader";
 import getTiktokDownloader from "./getTiktokDownloader";
 import getXDownloader from "./getXDownloader";
+import getLeetCode from "./getLeetCode";
+import getCodeforces from "./getCodeforces";
+import getOGImage from "./getOGImage";
+import getNPMPackage from "./getNPMPackage";
+import getStarWars from "./getStarWars";
+import getQRCode from "./getQRCode";
+import getIPInfo from "./getIPInfo";
+import getChess from "./getChess";
 
 export {
   getYoutubeDownloader,
@@ -24,4 +32,12 @@ export {
   getInstagramDownloader,
   getTiktokDownloader,
   getXDownloader,
+  getLeetCode,
+  getCodeforces,
+  getOGImage,
+  getNPMPackage,
+  getStarWars,
+  getQRCode,
+  getIPInfo,
+  getChess,
 }
