@@ -40,7 +40,8 @@ export default createElysia().get(
         authUrl = await (providerInstance as any).createAuthorizationURL(state, codeVerifier, ["openid", "profile", "email"]);
         break;
       case "github":
-        authUrl = await (providerInstance as any).createAuthorizationURL(state, codeVerifier, ["user:email"]);
+        // GitHub does not use PKCE — only pass state and scopes
+        authUrl = await (providerInstance as any).createAuthorizationURL(state, ["user:email"]);
         break;
       case "discord":
         authUrl = await (providerInstance as any).createAuthorizationURL(state, codeVerifier, ["identify", "email"]);
