@@ -59,7 +59,16 @@ import {
   getInstagramDownloader,
   getTiktokDownloader,
   getXDownloader,
+  getLeetCode,
+  getCodeforces,
+  getOGImage,
+  getNPMPackage,
+  getStarWars,
+  getQRCode,
+  getIPInfo,
+  getChess,
 } from "./controller/tools";
+import { getRSS } from "./controller/rss";
 import publicChat from "./controller/public-chat";
 import web3 from "./controller/web3";
 
@@ -128,6 +137,17 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(getInstagramDownloader)
       .use(getTiktokDownloader)
       .use(getXDownloader)
+      .use(getLeetCode)
+      .use(getCodeforces)
+      .use(getOGImage)
+      .use(getNPMPackage)
+      .use(getStarWars)
+      .use(getQRCode)
+      .use(getIPInfo)
+      .use(getChess)
+  )
+  .group("/rss", (api) =>
+    api.use(getRSS)
   )
   .group("/spotify", (api) =>
     api.use(getSpotify)
