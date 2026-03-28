@@ -102,7 +102,8 @@ export default createElysia().get(
         }
 
         case "github": {
-          tokens = await (providerInstance as any).validateAuthorizationCode(code, codeVerifier);
+          // GitHub does not use PKCE — codeVerifier is not needed
+          tokens = await (providerInstance as any).validateAuthorizationCode(code);
           const response = await fetch("https://api.github.com/user", {
             headers: {
               Authorization: `Bearer ${tokens.accessToken()}`,
