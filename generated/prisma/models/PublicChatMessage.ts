@@ -437,10 +437,6 @@ export type PublicChatMessageUncheckedCreateNestedManyWithoutReplyToInput = {
   connect?: Prisma.PublicChatMessageWhereUniqueInput | Prisma.PublicChatMessageWhereUniqueInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type PublicChatMessageUpdateOneWithoutRepliesNestedInput = {
   create?: Prisma.XOR<Prisma.PublicChatMessageCreateWithoutRepliesInput, Prisma.PublicChatMessageUncheckedCreateWithoutRepliesInput>
   connectOrCreate?: Prisma.PublicChatMessageCreateOrConnectWithoutRepliesInput

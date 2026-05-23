@@ -108,6 +108,14 @@ class UnauthorizedException extends Error {
     this.name = "UNAUTHORIZED";
   }
 }
+class TooManyRequestsException extends Error {
+  code = "TOO_MANY_REQUESTS";
+  status = 429;
+  constructor(message?: string) {
+    super(message ?? "Too many requests. Please try again later.");
+    this.name = "TOO_MANY_REQUESTS";
+  }
+}
 
 export {
   BadGatewayException,
@@ -121,4 +129,5 @@ export {
   NotImplementedException,
   ServiceUnavailableException,
   UnauthorizedException,
+  TooManyRequestsException,
 };

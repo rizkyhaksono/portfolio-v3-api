@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   UnauthorizedException
 } from "@/constants/exceptions";
+import { getAllowedOrigins } from "@/constants/corsOrigins";
 
 const sessionCookieName = lucia.sessionCookieName;
 
@@ -52,22 +53,7 @@ const authGuard = new Elysia({
     method !== "GET" &&
     (!origin ||
       !host ||
-      !verifyRequestOrigin(origin, [
-        "https://rizkyhaksono.vercel.app",
-        "rizkyhaksono.vercel.app",
-        "https://rizkyhaksono.natee.my.id",
-        "rizkyhaksono.natee.my.id",
-        "https://nateee.com",
-        "https://nateon.io",
-        "https://natee.my.id",
-        "nateee.com",
-        "nateon.io",
-        "natee.my.id",
-        "http://localhost:3000",
-        "localhost:3000",
-        "http://localhost:3005",
-        "localhost:3005",
-      ]))
+      !verifyRequestOrigin(origin, getAllowedOrigins()))
   ) {
     throw new ForbiddenException("Invalid origin");
   }

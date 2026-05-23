@@ -65,6 +65,21 @@ export type OAuthAccount = Prisma.OAuthAccountModel
  */
 export type User = Prisma.UserModel
 /**
+ * Model AdminSettings
+ * 
+ */
+export type AdminSettings = Prisma.AdminSettingsModel
+/**
+ * Model BlogPost
+ * 
+ */
+export type BlogPost = Prisma.BlogPostModel
+/**
+ * Model PortfolioEmbedding
+ * 
+ */
+export type PortfolioEmbedding = Prisma.PortfolioEmbeddingModel
+/**
  * Model Session
  * 
  */

@@ -85,8 +85,51 @@ model User {
   sessions           Session[]
   aiChat             AIChat[]
   publicChatMessages PublicChatMessage[]
+  adminSettings      AdminSettings?
   createdAt          DateTime            @default(now()) @map("created_at")
   updatedAt          DateTime            @updatedAt @map("updated_at")
+}
+
+model AdminSettings {
+  id                 String   @id @default(cuid())
+  userId             String   @unique @map("user_id")
+  website            String?
+  emailNotifications Boolean  @default(true) @map("email_notifications")
+  pushNotifications  Boolean  @default(false) @map("push_notifications")
+  weeklyDigest       Boolean  @default(true) @map("weekly_digest")
+  projectUpdates     Boolean  @default(true) @map("project_updates")
+  securityAlerts     Boolean  @default(true) @map("security_alerts")
+  theme              String   @default("system")
+  language           String   @default("en")
+  timezone           String   @default("UTC")
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  description String
+  content     String    @db.Text
+  coverImage  String?   @map("cover_image")
+  published   Boolean   @default(false)
+  publishedAt DateTime? @map("published_at")
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+}
+
+model PortfolioEmbedding {
+  id         String   @id @default(cuid())
+  sourceType String   @map("source_type")
+  sourceId   String   @map("source_id")
+  content    String   @db.Text
+  embedding  Json
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([sourceType, sourceId])
+  @@index([sourceType])
 }
 
 model Session {

@@ -4,24 +4,11 @@ import apiRoutes from "./api";
 import { docs } from "./libs/swagger";
 import { instrumentation } from "./libs/instrumentation";
 import { lookupIP } from "./utils/ipGeoLookup";
+import { getAllowedOrigins } from "./constants/corsOrigins";
 
 const api = baseElysia()
   .use(cors({
-    origin: [
-      "https://rizkyhaksono.vercel.app",
-      "rizkyhaksono.vercel.app",
-      "https://rizkyhaksono.natee.my.id",
-      "rizkyhaksono.natee.my.id",
-      "https://nateee.com",
-      "nateee.com",
-      "https://azure.nateee.com",
-      "azure.nateee.com",
-      "https://natee.my.id",
-      "natee.my.id",
-      "http://localhost:3000",
-      "localhost:3000",
-      "http://localhost:3000",
-    ],
+    origin: getAllowedOrigins(),
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }))

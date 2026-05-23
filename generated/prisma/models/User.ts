@@ -283,6 +283,7 @@ export type UserWhereInput = {
   sessions?: Prisma.SessionListRelationFilter
   aiChat?: Prisma.AIChatListRelationFilter
   publicChatMessages?: Prisma.PublicChatMessageListRelationFilter
+  adminSettings?: Prisma.XOR<Prisma.AdminSettingsNullableScalarRelationFilter, Prisma.AdminSettingsWhereInput> | null
 }
 
 export type UserOrderByWithRelationInput = {
@@ -308,6 +309,7 @@ export type UserOrderByWithRelationInput = {
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   aiChat?: Prisma.AIChatOrderByRelationAggregateInput
   publicChatMessages?: Prisma.PublicChatMessageOrderByRelationAggregateInput
+  adminSettings?: Prisma.AdminSettingsOrderByWithRelationInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -336,6 +338,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   sessions?: Prisma.SessionListRelationFilter
   aiChat?: Prisma.AIChatListRelationFilter
   publicChatMessages?: Prisma.PublicChatMessageListRelationFilter
+  adminSettings?: Prisma.XOR<Prisma.AdminSettingsNullableScalarRelationFilter, Prisma.AdminSettingsWhereInput> | null
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -407,6 +410,7 @@ export type UserCreateInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   aiChat?: Prisma.AIChatCreateNestedManyWithoutUserInput
   publicChatMessages?: Prisma.PublicChatMessageCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -432,6 +436,7 @@ export type UserUncheckedCreateInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   aiChat?: Prisma.AIChatUncheckedCreateNestedManyWithoutUserInput
   publicChatMessages?: Prisma.PublicChatMessageUncheckedCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -457,6 +462,7 @@ export type UserUpdateInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   aiChat?: Prisma.AIChatUpdateManyWithoutUserNestedInput
   publicChatMessages?: Prisma.PublicChatMessageUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -482,6 +488,7 @@ export type UserUncheckedUpdateInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   aiChat?: Prisma.AIChatUncheckedUpdateManyWithoutUserNestedInput
   publicChatMessages?: Prisma.PublicChatMessageUncheckedUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -627,6 +634,20 @@ export type EnumUserRoleFieldUpdateOperationsInput = {
   set?: $Enums.UserRole
 }
 
+export type UserCreateNestedOneWithoutAdminSettingsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAdminSettingsInput, Prisma.UserUncheckedCreateWithoutAdminSettingsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAdminSettingsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutAdminSettingsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutAdminSettingsInput, Prisma.UserUncheckedCreateWithoutAdminSettingsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutAdminSettingsInput
+  upsert?: Prisma.UserUpsertWithoutAdminSettingsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAdminSettingsInput, Prisma.UserUpdateWithoutAdminSettingsInput>, Prisma.UserUncheckedUpdateWithoutAdminSettingsInput>
+}
+
 export type UserCreateNestedOneWithoutSessionsInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutSessionsInput, Prisma.UserUncheckedCreateWithoutSessionsInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutSessionsInput
@@ -705,6 +726,7 @@ export type UserCreateWithoutOauthAccountsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   aiChat?: Prisma.AIChatCreateNestedManyWithoutUserInput
   publicChatMessages?: Prisma.PublicChatMessageCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutOauthAccountsInput = {
@@ -729,6 +751,7 @@ export type UserUncheckedCreateWithoutOauthAccountsInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   aiChat?: Prisma.AIChatUncheckedCreateNestedManyWithoutUserInput
   publicChatMessages?: Prisma.PublicChatMessageUncheckedCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutOauthAccountsInput = {
@@ -769,6 +792,7 @@ export type UserUpdateWithoutOauthAccountsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   aiChat?: Prisma.AIChatUpdateManyWithoutUserNestedInput
   publicChatMessages?: Prisma.PublicChatMessageUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutOauthAccountsInput = {
@@ -790,6 +814,123 @@ export type UserUncheckedUpdateWithoutOauthAccountsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   passwordResets?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  aiChat?: Prisma.AIChatUncheckedUpdateManyWithoutUserNestedInput
+  publicChatMessages?: Prisma.PublicChatMessageUncheckedUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUncheckedUpdateOneWithoutUserNestedInput
+}
+
+export type UserCreateWithoutAdminSettingsInput = {
+  id?: string
+  email: string
+  emailVerified?: boolean
+  role?: $Enums.UserRole
+  name: string
+  headline?: string | null
+  location?: string | null
+  about?: string | null
+  avatarUrl?: string | null
+  avatarMinioKey?: string | null
+  bannerUrl?: string | null
+  bannerMinioKey?: string | null
+  iconUrl?: string | null
+  hashedPassword?: string | null
+  passwordSalt?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  passwordResets?: Prisma.PasswordResetTokenCreateNestedOneWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  aiChat?: Prisma.AIChatCreateNestedManyWithoutUserInput
+  publicChatMessages?: Prisma.PublicChatMessageCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutAdminSettingsInput = {
+  id?: string
+  email: string
+  emailVerified?: boolean
+  role?: $Enums.UserRole
+  name: string
+  headline?: string | null
+  location?: string | null
+  about?: string | null
+  avatarUrl?: string | null
+  avatarMinioKey?: string | null
+  bannerUrl?: string | null
+  bannerMinioKey?: string | null
+  iconUrl?: string | null
+  hashedPassword?: string | null
+  passwordSalt?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  passwordResets?: Prisma.PasswordResetTokenUncheckedCreateNestedOneWithoutUserInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  aiChat?: Prisma.AIChatUncheckedCreateNestedManyWithoutUserInput
+  publicChatMessages?: Prisma.PublicChatMessageUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutAdminSettingsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutAdminSettingsInput, Prisma.UserUncheckedCreateWithoutAdminSettingsInput>
+}
+
+export type UserUpsertWithoutAdminSettingsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutAdminSettingsInput, Prisma.UserUncheckedUpdateWithoutAdminSettingsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutAdminSettingsInput, Prisma.UserUncheckedCreateWithoutAdminSettingsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutAdminSettingsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutAdminSettingsInput, Prisma.UserUncheckedUpdateWithoutAdminSettingsInput>
+}
+
+export type UserUpdateWithoutAdminSettingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  headline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  about?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarMinioKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bannerUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bannerMinioKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  iconUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hashedPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  passwordResets?: Prisma.PasswordResetTokenUpdateOneWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  aiChat?: Prisma.AIChatUpdateManyWithoutUserNestedInput
+  publicChatMessages?: Prisma.PublicChatMessageUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutAdminSettingsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  headline?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  about?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarMinioKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bannerUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bannerMinioKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  iconUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  hashedPassword?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  passwordResets?: Prisma.PasswordResetTokenUncheckedUpdateOneWithoutUserNestedInput
+  oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   aiChat?: Prisma.AIChatUncheckedUpdateManyWithoutUserNestedInput
   publicChatMessages?: Prisma.PublicChatMessageUncheckedUpdateManyWithoutUserNestedInput
@@ -817,6 +958,7 @@ export type UserCreateWithoutSessionsInput = {
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
   aiChat?: Prisma.AIChatCreateNestedManyWithoutUserInput
   publicChatMessages?: Prisma.PublicChatMessageCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -841,6 +983,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
   aiChat?: Prisma.AIChatUncheckedCreateNestedManyWithoutUserInput
   publicChatMessages?: Prisma.PublicChatMessageUncheckedCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -881,6 +1024,7 @@ export type UserUpdateWithoutSessionsInput = {
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
   aiChat?: Prisma.AIChatUpdateManyWithoutUserNestedInput
   publicChatMessages?: Prisma.PublicChatMessageUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -905,6 +1049,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
   aiChat?: Prisma.AIChatUncheckedUpdateManyWithoutUserNestedInput
   publicChatMessages?: Prisma.PublicChatMessageUncheckedUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPasswordResetsInput = {
@@ -929,6 +1074,7 @@ export type UserCreateWithoutPasswordResetsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   aiChat?: Prisma.AIChatCreateNestedManyWithoutUserInput
   publicChatMessages?: Prisma.PublicChatMessageCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPasswordResetsInput = {
@@ -953,6 +1099,7 @@ export type UserUncheckedCreateWithoutPasswordResetsInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   aiChat?: Prisma.AIChatUncheckedCreateNestedManyWithoutUserInput
   publicChatMessages?: Prisma.PublicChatMessageUncheckedCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPasswordResetsInput = {
@@ -993,6 +1140,7 @@ export type UserUpdateWithoutPasswordResetsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   aiChat?: Prisma.AIChatUpdateManyWithoutUserNestedInput
   publicChatMessages?: Prisma.PublicChatMessageUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPasswordResetsInput = {
@@ -1017,6 +1165,7 @@ export type UserUncheckedUpdateWithoutPasswordResetsInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   aiChat?: Prisma.AIChatUncheckedUpdateManyWithoutUserNestedInput
   publicChatMessages?: Prisma.PublicChatMessageUncheckedUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutAiChatInput = {
@@ -1041,6 +1190,7 @@ export type UserCreateWithoutAiChatInput = {
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   publicChatMessages?: Prisma.PublicChatMessageCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutAiChatInput = {
@@ -1065,6 +1215,7 @@ export type UserUncheckedCreateWithoutAiChatInput = {
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   publicChatMessages?: Prisma.PublicChatMessageUncheckedCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutAiChatInput = {
@@ -1105,6 +1256,7 @@ export type UserUpdateWithoutAiChatInput = {
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   publicChatMessages?: Prisma.PublicChatMessageUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutAiChatInput = {
@@ -1129,6 +1281,7 @@ export type UserUncheckedUpdateWithoutAiChatInput = {
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   publicChatMessages?: Prisma.PublicChatMessageUncheckedUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPublicChatMessagesInput = {
@@ -1153,6 +1306,7 @@ export type UserCreateWithoutPublicChatMessagesInput = {
   oauthAccounts?: Prisma.OAuthAccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   aiChat?: Prisma.AIChatCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPublicChatMessagesInput = {
@@ -1177,6 +1331,7 @@ export type UserUncheckedCreateWithoutPublicChatMessagesInput = {
   oauthAccounts?: Prisma.OAuthAccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   aiChat?: Prisma.AIChatUncheckedCreateNestedManyWithoutUserInput
+  adminSettings?: Prisma.AdminSettingsUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPublicChatMessagesInput = {
@@ -1217,6 +1372,7 @@ export type UserUpdateWithoutPublicChatMessagesInput = {
   oauthAccounts?: Prisma.OAuthAccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   aiChat?: Prisma.AIChatUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPublicChatMessagesInput = {
@@ -1241,6 +1397,7 @@ export type UserUncheckedUpdateWithoutPublicChatMessagesInput = {
   oauthAccounts?: Prisma.OAuthAccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   aiChat?: Prisma.AIChatUncheckedUpdateManyWithoutUserNestedInput
+  adminSettings?: Prisma.AdminSettingsUncheckedUpdateOneWithoutUserNestedInput
 }
 
 
@@ -1324,6 +1481,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   aiChat?: boolean | Prisma.User$aiChatArgs<ExtArgs>
   publicChatMessages?: boolean | Prisma.User$publicChatMessagesArgs<ExtArgs>
+  adminSettings?: boolean | Prisma.User$adminSettingsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1394,6 +1552,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   aiChat?: boolean | Prisma.User$aiChatArgs<ExtArgs>
   publicChatMessages?: boolean | Prisma.User$publicChatMessagesArgs<ExtArgs>
+  adminSettings?: boolean | Prisma.User$adminSettingsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1407,6 +1566,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     aiChat: Prisma.$AIChatPayload<ExtArgs>[]
     publicChatMessages: Prisma.$PublicChatMessagePayload<ExtArgs>[]
+    adminSettings: Prisma.$AdminSettingsPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1825,6 +1985,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   aiChat<T extends Prisma.User$aiChatArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$aiChatArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AIChatPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   publicChatMessages<T extends Prisma.User$publicChatMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$publicChatMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PublicChatMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  adminSettings<T extends Prisma.User$adminSettingsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$adminSettingsArgs<ExtArgs>>): Prisma.Prisma__AdminSettingsClient<runtime.Types.Result.GetResult<Prisma.$AdminSettingsPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2371,6 +2532,25 @@ export type User$publicChatMessagesArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.PublicChatMessageScalarFieldEnum | Prisma.PublicChatMessageScalarFieldEnum[]
+}
+
+/**
+ * User.adminSettings
+ */
+export type User$adminSettingsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AdminSettings
+   */
+  select?: Prisma.AdminSettingsSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AdminSettings
+   */
+  omit?: Prisma.AdminSettingsOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AdminSettingsInclude<ExtArgs> | null
+  where?: Prisma.AdminSettingsWhereInput
 }
 
 /**

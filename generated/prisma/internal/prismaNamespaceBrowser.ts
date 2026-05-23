@@ -56,6 +56,9 @@ export const ModelName = {
   Work: 'Work',
   OAuthAccount: 'OAuthAccount',
   User: 'User',
+  AdminSettings: 'AdminSettings',
+  BlogPost: 'BlogPost',
+  PortfolioEmbedding: 'PortfolioEmbedding',
   Session: 'Session',
   PasswordResetToken: 'PasswordResetToken',
   AIChat: 'AIChat',
@@ -157,6 +160,53 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+export const AdminSettingsScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  website: 'website',
+  emailNotifications: 'emailNotifications',
+  pushNotifications: 'pushNotifications',
+  weeklyDigest: 'weeklyDigest',
+  projectUpdates: 'projectUpdates',
+  securityAlerts: 'securityAlerts',
+  theme: 'theme',
+  language: 'language',
+  timezone: 'timezone',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AdminSettingsScalarFieldEnum = (typeof AdminSettingsScalarFieldEnum)[keyof typeof AdminSettingsScalarFieldEnum]
+
+
+export const BlogPostScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  slug: 'slug',
+  description: 'description',
+  content: 'content',
+  coverImage: 'coverImage',
+  published: 'published',
+  publishedAt: 'publishedAt',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type BlogPostScalarFieldEnum = (typeof BlogPostScalarFieldEnum)[keyof typeof BlogPostScalarFieldEnum]
+
+
+export const PortfolioEmbeddingScalarFieldEnum = {
+  id: 'id',
+  sourceType: 'sourceType',
+  sourceId: 'sourceId',
+  content: 'content',
+  embedding: 'embedding',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PortfolioEmbeddingScalarFieldEnum = (typeof PortfolioEmbeddingScalarFieldEnum)[keyof typeof PortfolioEmbeddingScalarFieldEnum]
+
+
 export const SessionScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -217,6 +267,13 @@ export const SortOrder = {
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+export const JsonNullValueInput = {
+  JsonNull: 'JsonNull'
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -231,4 +288,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: 'DbNull',
+  JsonNull: 'JsonNull',
+  AnyNull: 'AnyNull'
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

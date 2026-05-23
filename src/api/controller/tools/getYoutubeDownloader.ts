@@ -2,7 +2,92 @@ import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
 import { Innertube } from "youtubei.js";
 
-export default createElysia()
+export default createElysia({ prefix: "/youtube" })
+  .get("/downloader", async ({
+    query,
+    set
+  }: {
+    query: { url: string };
+    set: { status: number };
+  }) => {
+    const { url } = query;
+    if (!url) {
+      set.status = 400;
+      return { success: false, error: "URL parameter is required" };
+    }
+
+    try {
+      const youtube = await Innertube.create();
+      const videoId = extractVideoId(url);
+      if (!videoId) {
+        set.status = 400;
+        return { success: false, error: "Invalid YouTube URL" };
+      }
+
+      const info = await youtube.getInfo(videoId);
+      const title = info.basic_info.title ?? "YouTube Video";
+      const thumbnail = info.basic_info.thumbnail?.[0]?.url ?? "";
+      const author = info.basic_info.author ?? "";
+      const duration = info.basic_info.duration
+        ? `${Math.floor(info.basic_info.duration / 60)}:${String(info.basic_info.duration % 60).padStart(2, "0")}`
+        : undefined;
+
+      const downloadLinks: { quality: string; url: string; size?: string }[] = [];
+
+      const videoFormats = info.streaming_data?.formats?.slice(0, 5) ?? [];
+      for (const f of videoFormats) {
+        if (f.url) {
+          downloadLinks.push({
+            quality: f.quality_label || (f.height ? `${f.height}p` : "video"),
+            url: f.url,
+          });
+        }
+      }
+
+      const audioFormats = info.streaming_data?.adaptive_formats
+        ?.filter((f: { has_audio?: boolean; has_video?: boolean; url?: string }) => f.has_audio && !f.has_video)
+        ?.slice(0, 3) ?? [];
+      for (const f of audioFormats) {
+        if (f.url) {
+          downloadLinks.push({
+            quality: "audio",
+            url: f.url,
+          });
+        }
+      }
+
+      if (downloadLinks.length === 0) {
+        downloadLinks.push({
+          quality: "info",
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+        });
+      }
+
+      return {
+        status: 200,
+        message: "ok",
+        data: {
+          title,
+          thumbnail,
+          author,
+          duration,
+          downloadLinks,
+        },
+      };
+    } catch (error: unknown) {
+      set.status = 500;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to fetch YouTube video",
+      };
+    }
+  }, {
+    query: t.Object({ url: t.String() }),
+    detail: {
+      tags: ["Social Media Downloaders"],
+      summary: "YouTube media downloader (info + links)",
+    },
+  })
   .get("/info", async ({
     query,
     set

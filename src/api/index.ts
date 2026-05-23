@@ -4,7 +4,9 @@ import {
   login,
   logout,
   provider,
-  providerCallback
+  providerCallback,
+  requestPasswordReset,
+  resetPassword,
 } from "./controller/auth";
 import {
   getAllProject,
@@ -31,7 +33,15 @@ import {
   requestAIChat,
   getAIChat,
   getAIChatById,
+  reindexPortfolio,
 } from "./controller/ai";
+import {
+  getAllBlog,
+  getBlogBySlug,
+  createBlog,
+  updateBlog,
+  deleteBlog,
+} from "./controller/blog";
 import {
   getUser,
   updateUser,
@@ -40,8 +50,9 @@ import {
   deleteAvatar,
   deleteBanner,
   getAvatar,
-  getBanner
+  getBanner,
 } from "./controller/user";
+import { getSettings, updateSettings } from "./controller/settings";
 import {
   minioUpload,
   minioDownload
@@ -80,6 +91,8 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(logout)
       .use(provider)
       .use(providerCallback)
+      .use(requestPasswordReset)
+      .use(resetPassword)
   )
   .group("/project", (api) =>
     api
@@ -110,11 +123,22 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(requestAIChat)
       .use(getAIChat)
       .use(getAIChatById)
+      .use(reindexPortfolio)
+  )
+  .group("/blog", (api) =>
+    api
+      .use(getAllBlog)
+      .use(getBlogBySlug)
+      .use(createBlog)
+      .use(updateBlog)
+      .use(deleteBlog)
   )
   .group("/me", (api) =>
     api
       .use(getUser)
       .use(updateUser)
+      .use(getSettings)
+      .use(updateSettings)
       .use(uploadAvatar)
       .use(uploadBanner)
       .use(deleteAvatar)

@@ -2,8 +2,9 @@ import Elysia, { t } from "elysia";
 
 const aiModel = new Elysia().model({
   "ai.model": t.Object({
-    text: t.String()
-  })
-})
+    text: t.String(),
+    chatId: t.Optional(t.String()),
+  }),
+});
 
 export default aiModel

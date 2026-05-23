@@ -31,6 +31,9 @@ const envValidateScheme = z.object({
   LOKI_PASSWORD: z.string().optional(),
   COINGECKO_API_KEY: z.string().optional(),
   ETHERSCAN_API_KEY: z.string().optional(),
+  GENERATIVE_AI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().optional(),
+  GEMINI_EMBEDDING_MODEL: z.string().optional(),
 });
 
 const env = () => {
