@@ -34,6 +34,10 @@ const envValidateScheme = z.object({
   GENERATIVE_AI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().optional(),
   GEMINI_EMBEDDING_MODEL: z.string().optional(),
+  PISTON_API_URL: z.string().optional(),
+  PISTON_API_KEY: z.string().optional(),
+  PAIZA_API_KEY: z.string().optional(),
+  COBALT_API_URL: z.string().optional(),
 });
 
 const env = () => {

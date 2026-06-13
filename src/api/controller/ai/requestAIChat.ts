@@ -153,13 +153,23 @@ export default createElysia()
         { role: "user", parts: [{ text: augmentedText }] },
       ];
 
-      let fullResponse = await runWithTools(model, contents);
+      let fullResponse: string;
+      try {
+        fullResponse = await runWithTools(model, contents);
+      } catch (err) {
+        const detail = err instanceof Error ? err.message : String(err);
+        throw new InternalServerErrorException(
+          `AI model "${GEMINI_MODEL}" request failed. Verify GENERATIVE_AI_API_KEY is valid and the model is accessible. Details: ${detail}`
+        );
+      }
 
-      const chunkSize = 24;
+      // Stream in small chunks so the client renders a visible, ChatGPT-like
+      // typing effect (a smaller chunk + slight delay reads as natural typing).
+      const chunkSize = 4;
       for (let i = 0; i < fullResponse.length; i += chunkSize) {
         const piece = fullResponse.slice(i, i + chunkSize);
         yield piece;
-        await new Promise((r) => setTimeout(r, 8));
+        await new Promise((r) => setTimeout(r, 12));
       }
 
       await prismaClient.aIChatMessage.create({

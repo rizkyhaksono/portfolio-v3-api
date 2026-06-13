@@ -1,5 +1,5 @@
 const WINDOW_MS = 60 * 1000;
-const MAX_REQUESTS = 3;
+const MAX_REQUESTS = 10;
 
 const buckets = new Map<string, number[]>();
 

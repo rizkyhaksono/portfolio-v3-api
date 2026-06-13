@@ -2,7 +2,7 @@ import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
 import userModel from "@/models/user.model";
-import { BadRequestException } from "@/constants/exceptions";
+import { BadRequestException, ForbiddenException } from "@/constants/exceptions";
 import { userGuard } from "@/libs/roleGuards";
 
 export default createElysia()
@@ -11,13 +11,18 @@ export default createElysia()
   .use(authGuard)
   .patch("/:id", async ({
     body,
-    params: {
-      id
-    },
+    user,
     logestic
   }) => {
+    if (!user) {
+      throw new ForbiddenException("Authentication required.");
+    }
+
+    // Always operate on the authenticated user's own record and ignore the URL :id.
+    // This prevents IDOR (a caller can never edit another user) and avoids a silent
+    // no-op when the client sends a stale/mismatched id.
     const userInfo = await prismaClient.user.findUnique({
-      where: { id }
+      where: { id: user.id }
     });
 
     if (!userInfo) {
@@ -26,7 +31,7 @@ export default createElysia()
     };
 
     return await prismaClient.user.update({
-      where: { id },
+      where: { id: user.id },
       data: {
         ...body
       }

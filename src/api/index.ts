@@ -33,6 +33,8 @@ import {
   requestAIChat,
   getAIChat,
   getAIChatById,
+  updateAIChat,
+  deleteAIChat,
   reindexPortfolio,
 } from "./controller/ai";
 import {
@@ -78,6 +80,8 @@ import {
   getQRCode,
   getIPInfo,
   getChess,
+  getCompiler,
+  getDownloader,
 } from "./controller/tools";
 import { getRSS } from "./controller/rss";
 import publicChat from "./controller/public-chat";
@@ -123,6 +127,8 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(requestAIChat)
       .use(getAIChat)
       .use(getAIChatById)
+      .use(updateAIChat)
+      .use(deleteAIChat)
       .use(reindexPortfolio)
   )
   .group("/blog", (api) =>
@@ -169,6 +175,8 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(getQRCode)
       .use(getIPInfo)
       .use(getChess)
+      .use(getCompiler)
+      .use(getDownloader)
   )
   .group("/rss", (api) =>
     api.use(getRSS)
