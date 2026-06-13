@@ -52,9 +52,21 @@ async function purrbot(category: string, type: "img" | "gif"): Promise<string> {
   return data.link;
 }
 
+// High-quality, S3-backed anime images. Reachable from datacenters (no Cloudflare WAF),
+// so it's the preferred fallback when nekos.best is IP-blocked in production.
+async function nekosApi(tag?: string): Promise<string> {
+  const tagParam = tag ? `&tags=${encodeURIComponent(tag)}` : "";
+  const res = await fetchWithTimeout(`https://api.nekosapi.com/v4/images/random?rating=safe&limit=1${tagParam}`);
+  if (!res.ok) throw new Error(`nekosapi ${res.status}`);
+  const data = (await res.json()) as { url?: string }[] | { items?: { url?: string }[] };
+  const url = Array.isArray(data) ? data[0]?.url : data?.items?.[0]?.url;
+  if (!url) throw new Error("nekosapi: no url");
+  return url;
+}
+
 const CATEGORY_SOURCES: Record<string, UrlResolver[]> = {
-  waifu: [() => nekosBest("waifu"), () => waifuPics("waifu"), () => nekosLife("waifu")],
-  neko: [() => nekosBest("neko"), () => purrbot("neko", "img"), () => waifuPics("neko"), () => nekosLife("neko")],
+  waifu: [() => nekosBest("waifu"), () => nekosApi("girl"), () => waifuPics("waifu"), () => nekosLife("waifu")],
+  neko: [() => nekosBest("neko"), () => purrbot("neko", "img"), () => nekosApi("catgirl"), () => waifuPics("neko"), () => nekosLife("neko")],
   cringe: [() => nekosBest("baka"), () => waifuPics("cringe"), () => nekosLife("baka")],
   blush: [() => nekosBest("blush"), () => waifuPics("blush"), () => purrbot("blush", "gif")],
   dance: [() => nekosBest("dance"), () => purrbot("dance", "gif"), () => waifuPics("dance")],
