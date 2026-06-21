@@ -21,8 +21,6 @@ interface DownloadResult {
   title: string;
   thumbnail: string;
   downloadLinks: DownloadLink[];
-  author?: string;
-  duration?: string;
 }
 
 async function fetchFromCobalt(url: string): Promise<DownloadResult> {

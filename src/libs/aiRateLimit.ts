@@ -31,9 +31,3 @@ export function checkAiRateLimit(userId: string): { allowed: boolean; retryAfter
   buckets.set(userId, timestamps);
   return { allowed: true };
 }
-
-export function getAiRateLimitRemaining(userId: string): number {
-  const now = Date.now();
-  const timestamps = (buckets.get(userId) ?? []).filter((t) => now - t < WINDOW_MS);
-  return Math.max(0, MAX_REQUESTS - timestamps.length);
-}

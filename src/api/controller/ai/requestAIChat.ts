@@ -132,17 +132,18 @@ export default createElysia()
         data: { msg: text, role: "user", aIChatId: chatRecord.id },
       });
 
-      // Take the MOST RECENT MAX_HISTORY messages (desc + take), then restore
-      // chronological order. Ordering asc here would freeze context at the oldest
-      // 20 messages once a chat grows past MAX_HISTORY.
-      const recentMessages = await prismaClient.aIChatMessage.findMany({
-        where: { aIChatId: chatRecord.id },
-        orderBy: { createdAt: "desc" },
-        take: MAX_HISTORY,
-      });
+      // History (most-recent MAX_HISTORY, restored to chronological order) and RAG
+      // context are independent — fetch them concurrently. Ordering asc instead of
+      // desc+reverse would freeze context at the oldest 20 once a chat grows.
+      const [recentMessages, portfolioContext] = await Promise.all([
+        prismaClient.aIChatMessage.findMany({
+          where: { aIChatId: chatRecord.id },
+          orderBy: { createdAt: "desc" },
+          take: MAX_HISTORY,
+        }),
+        retrievePortfolioContext(text).catch(() => ""),
+      ]);
       const priorMessages = recentMessages.reverse();
-
-      const portfolioContext = await retrievePortfolioContext(text).catch(() => "");
       const augmentedText = portfolioContext
         ? `${text}\n\n[Portfolio context]\n${portfolioContext}`
         : text;
