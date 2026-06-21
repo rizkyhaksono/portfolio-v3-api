@@ -47,14 +47,18 @@ async function fetchFromCobalt(url: string): Promise<DownloadResult> {
 
   if (data.status === "redirect" || data.status === "tunnel" || data.status === "stream") {
     title = data.filename ?? "Media";
-    downloadLinks.push({ quality: "Download", url: data.url });
+    if (typeof data.url === "string" && data.url) {
+      downloadLinks.push({ quality: "Download", url: data.url });
+    }
   } else if (data.status === "picker" && Array.isArray(data.picker)) {
     title = "Media gallery";
     thumbnail = data.picker[0]?.thumb ?? thumbnail;
-    data.picker.forEach((item: { type?: string; url: string }, i: number) => {
-      downloadLinks.push({ quality: item.type ? `${item.type} ${i + 1}` : `Item ${i + 1}`, url: item.url });
+    data.picker.forEach((item: { type?: string; url?: string }, i: number) => {
+      if (typeof item.url === "string" && item.url) {
+        downloadLinks.push({ quality: item.type ? `${item.type} ${i + 1}` : `Item ${i + 1}`, url: item.url });
+      }
     });
-    if (data.audio) downloadLinks.push({ quality: "Audio", url: data.audio });
+    if (typeof data.audio === "string" && data.audio) downloadLinks.push({ quality: "Audio", url: data.audio });
   }
 
   if (downloadLinks.length === 0) {

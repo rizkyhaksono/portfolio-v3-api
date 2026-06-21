@@ -15,7 +15,6 @@ const userModel = new Elysia().model({
   }),
   "update.user.model": t.Object({
     email: t.Optional(t.String({ format: "email" })),
-    emailVerified: t.Optional(t.Boolean()),
     name: t.Optional(t.String()),
     headline: t.Optional(t.String()),
     location: t.Optional(t.String()),

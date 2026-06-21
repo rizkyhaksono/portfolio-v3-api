@@ -108,23 +108,25 @@ export default createElysia()
   .get("/anime/dance", async () => streamAnimeImage("dance"), {
     detail: { tags: ["Anime"], summary: "Get Dance Image", description: "Random dance image (multi-provider fallback)" },
   })
-  .get("/anime/quote", async () => {
+  .get("/anime/quote", async ({ set }: { set: { status?: number } }) => {
     try {
       const res = await fetchWithTimeout("https://api.animechan.io/v1/quotes/random");
-      if (!res.ok) return { status: res.status, message: "Failed to fetch anime quote", data: null };
+      if (!res.ok) { set.status = res.status; return { status: res.status, message: "Failed to fetch anime quote", data: null }; }
       return await res.json();
     } catch {
+      set.status = 502;
       return { status: 502, message: "Anime quote service unavailable", data: null };
     }
   }, {
     detail: { tags: ["Anime"], summary: "Get Anime Quote", description: "Fetch a random anime quote from the animechan.io API" },
   })
-  .get("/anime/:name/quote", async ({ params }: { params: { name: string } }) => {
+  .get("/anime/:name/quote", async ({ params, set }: { params: { name: string }; set: { status?: number } }) => {
     try {
       const res = await fetchWithTimeout(`https://api.animechan.io/v1/anime/${params.name}`);
-      if (!res.ok) return { status: res.status, message: "Failed to fetch anime quotes", data: null };
+      if (!res.ok) { set.status = res.status; return { status: res.status, message: "Failed to fetch anime quotes", data: null }; }
       return await res.json();
     } catch {
+      set.status = 502;
       return { status: 502, message: "Anime quote service unavailable", data: null };
     }
   }, {

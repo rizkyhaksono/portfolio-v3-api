@@ -12,6 +12,7 @@ export default createElysia()
   .patch("/:id", async ({
     body,
     user,
+    set,
     logestic
   }) => {
     if (!user) {
@@ -30,12 +31,31 @@ export default createElysia()
       throw new BadRequestException("User not found.");
     };
 
-    return await prismaClient.user.update({
-      where: { id: user.id },
-      data: {
-        ...body
+    // Whitelist editable fields only — never trust the client for emailVerified/role.
+    const data: Record<string, unknown> = {};
+    if (body.name !== undefined) data.name = body.name;
+    if (body.headline !== undefined) data.headline = body.headline;
+    if (body.location !== undefined) data.location = body.location;
+    if (body.about !== undefined) data.about = body.about;
+    if (body.bannerUrl !== undefined) data.bannerUrl = body.bannerUrl;
+    // Changing the email must invalidate verification.
+    if (body.email !== undefined && body.email !== userInfo.email) {
+      data.email = body.email;
+      data.emailVerified = false;
+    }
+
+    try {
+      return await prismaClient.user.update({
+        where: { id: user.id },
+        data,
+      });
+    } catch (err) {
+      if (err && typeof err === "object" && (err as { code?: string }).code === "P2002") {
+        set.status = 409;
+        return { status: 409, message: "That email is already in use.", data: null };
       }
-    });
+      throw err;
+    }
   }, {
     body: "update.user.model",
     detail: {

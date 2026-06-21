@@ -9,14 +9,17 @@ export default createElysia()
     async ({
       params: { id },
       user,
+      set,
     }: {
       params: { id: string };
       user: { id: string };
+      set: { status?: number };
     }) => {
       const chat = await prismaClient.aIChat.findFirst({
         where: { id, userId: user.id },
       });
       if (!chat) {
+        set.status = 404;
         return { status: 404, message: "Chat not found" };
       }
 
