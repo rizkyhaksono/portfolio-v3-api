@@ -124,7 +124,7 @@ export default createElysia()
   .get(
     "/starwars/people",
     async ({ query }: { query: { page?: string } }) => {
-      const page = Math.max(parseInt(query.page ?? "1"), 1);
+      const page = Math.max(parseInt(query.page ?? "1", 10) || 1, 1);
       const all = await getJson<AkababChar[]>(`${AKABAB}/all.json`);
       const { slice, ...meta } = paginate(all, page);
       return { status: 200, message: "Success", data: slice.map(mapPerson), ...meta };
@@ -152,7 +152,7 @@ export default createElysia()
   .get(
     "/starwars/starships",
     async ({ query }: { query: { page?: string } }) => {
-      const page = Math.max(parseInt(query.page ?? "1"), 1);
+      const page = Math.max(parseInt(query.page ?? "1", 10) || 1, 1);
       const all = await getJson<SwapiStarship[]>(`${SWAPI}/starships`);
       const { slice, ...meta } = paginate(all, page);
       const images = await fetchFandomImages(slice.map((s) => s.name));
