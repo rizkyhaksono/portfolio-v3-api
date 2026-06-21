@@ -152,6 +152,13 @@ export default createElysia()
         parts: [{ text: m.msg }],
       }));
 
+      // Gemini requires the conversation to begin with a user turn. Once the
+      // most-recent window starts mid-exchange it can lead with a model message,
+      // so drop any leading model turns.
+      while (history.length > 0 && history[0].role !== "user") {
+        history.shift();
+      }
+
       const contents: Content[] = [
         ...history,
         { role: "user", parts: [{ text: augmentedText }] },
