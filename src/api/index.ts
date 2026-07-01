@@ -36,7 +36,22 @@ import {
   updateAIChat,
   deleteAIChat,
   reindexPortfolio,
+  publicAIChat,
+  askResume,
+  ocrDemo,
+  jdMatcher,
 } from "./controller/ai";
+import {
+  getTrackerTasks,
+  createTrackerTask,
+  updateTrackerTask,
+  deleteTrackerTask,
+} from "./controller/tracker";
+import { getHealth } from "./controller/health";
+import { getReactions, addReaction } from "./controller/reactions";
+import { createFeedback, listFeedback, updateFeedback } from "./controller/feedback";
+import { getNotifications } from "./controller/notifications";
+import { getOwnerProfile } from "./controller/profile";
 import {
   getAllBlog,
   getBlogBySlug,
@@ -130,7 +145,28 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(updateAIChat)
       .use(deleteAIChat)
       .use(reindexPortfolio)
+      .use(publicAIChat)
+      .use(askResume)
+      .use(ocrDemo)
+      .use(jdMatcher)
   )
+  .group("/tracker", (api) =>
+    api
+      .use(getTrackerTasks)
+      .use(createTrackerTask)
+      .use(updateTrackerTask)
+      .use(deleteTrackerTask)
+  )
+  .group("/health", (api) => api.use(getHealth))
+  .group("/reactions", (api) => api.use(getReactions).use(addReaction))
+  .group("/feedback", (api) =>
+    api
+      .use(createFeedback)
+      .use(listFeedback)
+      .use(updateFeedback)
+  )
+  .group("/notifications", (api) => api.use(getNotifications))
+  .group("/profile", (api) => api.use(getOwnerProfile))
   .group("/blog", (api) =>
     api
       .use(getAllBlog)

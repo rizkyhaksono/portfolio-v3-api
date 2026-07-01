@@ -26,14 +26,15 @@ export default createElysia()
       // Calculate offset
       const offset = (page - 1) * limit;
 
-      // Fetch paginated posts
+      // Fetch paginated posts (newest first so page 1 always contains the most
+      // recent messages; the client re-sorts chronologically for display).
       const posts = await prismaClient.publicChatMessage.findMany({
         where: {
           deletedAt: null,
           replyToId: null, // Only fetch top-level messages
         },
         orderBy: {
-          createdAt: "asc",
+          createdAt: "desc",
         },
         skip: offset,
         take: limit,

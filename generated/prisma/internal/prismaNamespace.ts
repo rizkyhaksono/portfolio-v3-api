@@ -396,7 +396,8 @@ export const ModelName = {
   PasswordResetToken: 'PasswordResetToken',
   AIChat: 'AIChat',
   AIChatMessage: 'AIChatMessage',
-  PublicChatMessage: 'PublicChatMessage'
+  PublicChatMessage: 'PublicChatMessage',
+  TrackerTask: 'TrackerTask'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -412,7 +413,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "project" | "education" | "work" | "oAuthAccount" | "user" | "adminSettings" | "blogPost" | "portfolioEmbedding" | "session" | "passwordResetToken" | "aIChat" | "aIChatMessage" | "publicChatMessage"
+    modelProps: "project" | "education" | "work" | "oAuthAccount" | "user" | "adminSettings" | "blogPost" | "portfolioEmbedding" | "session" | "passwordResetToken" | "aIChat" | "aIChatMessage" | "publicChatMessage" | "trackerTask"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1378,6 +1379,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TrackerTask: {
+      payload: Prisma.$TrackerTaskPayload<ExtArgs>
+      fields: Prisma.TrackerTaskFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TrackerTaskFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TrackerTaskFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload>
+        }
+        findFirst: {
+          args: Prisma.TrackerTaskFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TrackerTaskFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload>
+        }
+        findMany: {
+          args: Prisma.TrackerTaskFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload>[]
+        }
+        create: {
+          args: Prisma.TrackerTaskCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload>
+        }
+        createMany: {
+          args: Prisma.TrackerTaskCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TrackerTaskCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload>[]
+        }
+        delete: {
+          args: Prisma.TrackerTaskDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload>
+        }
+        update: {
+          args: Prisma.TrackerTaskUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload>
+        }
+        deleteMany: {
+          args: Prisma.TrackerTaskDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TrackerTaskUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TrackerTaskUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload>[]
+        }
+        upsert: {
+          args: Prisma.TrackerTaskUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TrackerTaskPayload>
+        }
+        aggregate: {
+          args: Prisma.TrackerTaskAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTrackerTask>
+        }
+        groupBy: {
+          args: Prisma.TrackerTaskGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TrackerTaskGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TrackerTaskCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TrackerTaskCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1594,6 +1669,25 @@ export const PublicChatMessageScalarFieldEnum = {
 export type PublicChatMessageScalarFieldEnum = (typeof PublicChatMessageScalarFieldEnum)[keyof typeof PublicChatMessageScalarFieldEnum]
 
 
+export const TrackerTaskScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  title: 'title',
+  description: 'description',
+  status: 'status',
+  priority: 'priority',
+  type: 'type',
+  order: 'order',
+  createdById: 'createdById',
+  createdByName: 'createdByName',
+  createdByAvatar: 'createdByAvatar',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TrackerTaskScalarFieldEnum = (typeof TrackerTaskScalarFieldEnum)[keyof typeof TrackerTaskScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1704,6 +1798,20 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
 
 
 /**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+/**
  * Reference to a field of type 'Int'
  */
 export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
@@ -1808,6 +1916,7 @@ export type GlobalOmitConfig = {
   aIChat?: Prisma.AIChatOmit
   aIChatMessage?: Prisma.AIChatMessageOmit
   publicChatMessage?: Prisma.PublicChatMessageOmit
+  trackerTask?: Prisma.TrackerTaskOmit
 }
 
 /* Types for Logging */

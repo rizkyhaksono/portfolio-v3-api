@@ -180,3 +180,21 @@ model PublicChatMessage {
   @@index([createdAt])
   @@index([replyToId])
 }
+
+model TrackerTask {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  title           String
+  description     String?  @db.Text
+  status          String   @default("todo")
+  priority        String   @default("medium")
+  type            String   @default("task")
+  order           Float    @default(1000)
+  createdById     String?  @map("created_by_id")
+  createdByName   String?  @map("created_by_name")
+  createdByAvatar String?  @map("created_by_avatar")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([status, order])
+}

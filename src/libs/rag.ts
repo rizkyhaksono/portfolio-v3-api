@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { prismaClient } from "@/libs/prismaDatabase";
+import { getSupabaseProjects, getSupabaseCareers, getSupabaseEducations } from "@/libs/supabaseData";
 
 const EMBEDDING_MODEL = process.env.GEMINI_EMBEDDING_MODEL ?? "text-embedding-004";
 const TOP_K = 5;
@@ -31,10 +32,10 @@ export async function indexPortfolioContent(): Promise<{ indexed: number }> {
   const apiKey = process.env.GENERATIVE_AI_API_KEY;
   if (!apiKey) return { indexed: 0 };
 
-  const [projects, works, educations] = await Promise.all([
-    prismaClient.project.findMany(),
-    prismaClient.work.findMany(),
-    prismaClient.education.findMany(),
+  const [projects, careers, educations] = await Promise.all([
+    getSupabaseProjects(),
+    getSupabaseCareers(),
+    getSupabaseEducations(),
   ]);
 
   const chunks: { sourceType: string; sourceId: string; content: string }[] = [];
@@ -43,21 +44,21 @@ export async function indexPortfolioContent(): Promise<{ indexed: number }> {
     chunks.push({
       sourceType: "project",
       sourceId: p.id,
-      content: `Project: ${p.title}\n${p.description}\n${p.content}`,
+      content: `Project: ${p.title}\n${p.description ?? ""}`,
     });
   }
-  for (const w of works) {
+  for (const c of careers) {
     chunks.push({
       sourceType: "work",
-      sourceId: w.id,
-      content: `Work: ${w.jobTitle} at ${w.instance}\n${w.content}\n${w.duration}`,
+      sourceId: c.id,
+      content: `Work experience: ${c.title}\n${c.subtitle ?? ""}\n${c.duration ?? ""}`,
     });
   }
   for (const e of educations) {
     chunks.push({
       sourceType: "education",
       sourceId: e.id,
-      content: `Education: ${e.instance}\n${e.content}\n${e.duration}`,
+      content: `Education: ${e.title}\n${e.subtitle ?? ""}\n${e.duration ?? ""}`,
     });
   }
 
@@ -88,25 +89,37 @@ export async function indexPortfolioContent(): Promise<{ indexed: number }> {
   return { indexed };
 }
 
-export async function retrievePortfolioContext(query: string): Promise<string> {
-  const apiKey = process.env.GENERATIVE_AI_API_KEY;
-  if (!apiKey) return "";
+export interface RetrievedSource {
+  sourceType: string;
+  sourceId: string;
+  score: number;
+}
 
-  const rows = await prismaClient.portfolioEmbedding.findMany();
+export async function retrievePortfolioContextWithSources(
+  query: string
+): Promise<{ text: string; sources: RetrievedSource[] }> {
+  const apiKey = process.env.GENERATIVE_AI_API_KEY;
+  if (!apiKey) return { text: "", sources: [] };
+
+  let rows = await prismaClient.portfolioEmbedding.findMany();
   if (rows.length === 0) {
     await indexPortfolioContent().catch(() => undefined);
-    const refreshed = await prismaClient.portfolioEmbedding.findMany();
-    if (refreshed.length === 0) return "";
-    return rankAndFormat(query, refreshed);
+    rows = await prismaClient.portfolioEmbedding.findMany();
+    if (rows.length === 0) return { text: "", sources: [] };
   }
 
   return rankAndFormat(query, rows);
 }
 
+export async function retrievePortfolioContext(query: string): Promise<string> {
+  const { text } = await retrievePortfolioContextWithSources(query);
+  return text;
+}
+
 async function rankAndFormat(
   query: string,
   rows: { content: string; embedding: unknown; sourceType: string; sourceId: string }[]
-): Promise<string> {
+): Promise<{ text: string; sources: RetrievedSource[] }> {
   const queryEmbedding = await embedText(query);
   const scored = rows
     .map((row) => {
@@ -119,12 +132,16 @@ async function rankAndFormat(
     .sort((a, b) => b.score - a.score)
     .slice(0, TOP_K);
 
-  if (scored.length === 0 || scored[0]!.score < 0.3) return "";
+  if (scored.length === 0 || scored[0]!.score < 0.3) return { text: "", sources: [] };
 
-  return scored
-    .map(
-      (s, i) =>
-        `[Source ${i + 1}: ${s.sourceType}/${s.sourceId}]\n${s.content}`
-    )
+  const text = scored
+    .map((s, i) => `[Source ${i + 1}: ${s.sourceType}/${s.sourceId}]\n${s.content}`)
     .join("\n\n---\n\n");
+  const sources: RetrievedSource[] = scored.map((s) => ({
+    sourceType: s.sourceType,
+    sourceId: s.sourceId,
+    score: s.score,
+  }));
+
+  return { text, sources };
 }

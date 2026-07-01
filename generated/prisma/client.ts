@@ -104,3 +104,8 @@ export type AIChatMessage = Prisma.AIChatMessageModel
  * 
  */
 export type PublicChatMessage = Prisma.PublicChatMessageModel
+/**
+ * Model TrackerTask
+ * 
+ */
+export type TrackerTask = Prisma.TrackerTaskModel

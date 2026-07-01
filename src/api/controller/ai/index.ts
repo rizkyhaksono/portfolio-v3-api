@@ -4,6 +4,10 @@ import getAIChatById from "./getAIChatById";
 import updateAIChat from "./updateAIChat";
 import deleteAIChat from "./deleteAIChat";
 import reindexPortfolio from "./reindexPortfolio";
+import publicAIChat from "./publicAIChat";
+import askResume from "./askResume";
+import ocrDemo from "./ocrDemo";
+import jdMatcher from "./jdMatcher";
 
 export {
   requestAIChat,
@@ -12,4 +16,8 @@ export {
   updateAIChat,
   deleteAIChat,
   reindexPortfolio,
+  publicAIChat,
+  askResume,
+  ocrDemo,
+  jdMatcher,
 };
