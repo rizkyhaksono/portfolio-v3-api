@@ -1,21 +1,33 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
-import { BadRequestException } from "@/constants/exceptions";
+import { BadRequestException, TooManyRequestsException } from "@/constants/exceptions";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { password as bunPassword } from "bun";
 import { alphabet, generateRandomString } from "oslo/crypto";
+import { checkAuthRateLimit } from "@/libs/aiRateLimit";
+import { getClientIp } from "@/utils/clientIp";
 
 export default createElysia().post(
   "/password-reset/confirm",
   async ({
     body,
+    request,
+    server,
     env: { PASSWORD_PEPPER: passwordPepper },
   }: {
     body: { token: string; password: string };
+    request: Request;
+    server: any;
     env: { PASSWORD_PEPPER: string };
   }) => {
+    const ip = getClientIp(request, server);
+    const rate = checkAuthRateLimit(`pwconfirm:${ip}`);
+    if (!rate.allowed) {
+      throw new TooManyRequestsException(`Too many attempts. Retry in ${rate.retryAfterSeconds ?? 60}s.`);
+    }
+
     const tokenHash = encodeHexLowerCase(
       sha256(new TextEncoder().encode(body.token))
     );

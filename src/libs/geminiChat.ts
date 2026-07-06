@@ -1,7 +1,25 @@
 import type { Content, GoogleGenerativeAI, Part } from "@google/generative-ai";
 import { portfolioToolDeclarations, executePortfolioTool } from "@/libs/geminiTools";
+import { ServiceUnavailableException, TooManyRequestsException } from "@/constants/exceptions";
 
-export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+/**
+ * Maps a raw Gemini SDK error to a friendly client-facing exception WITHOUT retrying
+ * (a retry storm would burn more free-tier quota). A 429/quota error becomes a
+ * TooManyRequestsException; anything else a ServiceUnavailableException.
+ */
+export function toFriendlyAiError(err: unknown): Error {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/\b429\b|RESOURCE_EXHAUSTED|quota|rate.?limit/i.test(msg)) {
+    return new TooManyRequestsException("Etan AI is busy right now (usage limit). Please try again in a minute.");
+  }
+  return new ServiceUnavailableException("Etan AI is temporarily unavailable. Please try again shortly.");
+}
+
+// Keep this on a FREE-TIER model only (e.g. gemini-3-flash-preview, gemini-2.5-flash).
+// Never point it at a Pro model (gemini-2.5-pro, gemini-3.1-pro*) — those have no free
+// tier and require a billing account.
+export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3-flash-preview";
+export const MAX_OUTPUT_TOKENS = 1024;
 
 export const SYSTEM_INSTRUCTION = `
 ### IDENTITY AND OWNERSHIP

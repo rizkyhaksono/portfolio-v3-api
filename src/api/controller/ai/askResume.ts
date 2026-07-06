@@ -2,9 +2,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { Content } from "@google/generative-ai";
 import { t } from "elysia";
 import { createElysia } from "@/libs/elysia";
-import { checkAiRateLimit } from "@/libs/aiRateLimit";
+import { checkAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
 import { retrievePortfolioContextWithSources } from "@/libs/rag";
-import { runWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL } from "@/libs/geminiChat";
+import { runWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL, MAX_OUTPUT_TOKENS } from "@/libs/geminiChat";
 import { getClientIp } from "@/utils/clientIp";
 
 /**
@@ -41,6 +41,10 @@ export default createElysia().post(
         data: null,
       };
     }
+    if (!checkPublicDailyBudget().allowed) {
+      set.status = 429;
+      return { status: 429, message: "Daily public AI limit reached. Try again tomorrow.", data: null };
+    }
 
     const { text: context, sources } = await retrievePortfolioContextWithSources(body.question).catch(
       () => ({ text: "", sources: [] })
@@ -54,6 +58,7 @@ export default createElysia().post(
     const model = genAI.getGenerativeModel({
       model: GEMINI_MODEL,
       systemInstruction: SYSTEM_INSTRUCTION,
+      generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
     });
     const contents: Content[] = [{ role: "user", parts: [{ text: augmented }] }];
 

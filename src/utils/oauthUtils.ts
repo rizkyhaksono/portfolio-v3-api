@@ -94,7 +94,23 @@ export async function handleOAuthUser(userInfo: OAuthUserInfo) {
   });
 
   if (existingUser) {
-    // Link OAuth account to existing user
+    // SECURITY: never auto-link a fresh OAuth identity into a privileged or
+    // password-protected account by email match alone. An attacker who controls an
+    // OAuth account asserting the admin's email must not be able to take it over.
+    // Such accounts must link the provider explicitly while already authenticated.
+    if (existingUser.role === "ADMIN" || existingUser.hashedPassword) {
+      logger.warn({
+        message: "Blocked OAuth auto-link to protected account",
+        userId: existingUser.id,
+        provider,
+        isAdmin: existingUser.role === "ADMIN",
+      });
+      throw new Error(
+        "An account with this email already exists. Please sign in with your email and password."
+      );
+    }
+
+    // Link OAuth account to existing (non-privileged, passwordless) user
     await prismaClient.oAuthAccount.create({
       data: {
         provider,

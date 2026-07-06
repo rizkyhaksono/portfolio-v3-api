@@ -1,6 +1,7 @@
 import {
   ConflictException,
-  InternalServerErrorException
+  InternalServerErrorException,
+  TooManyRequestsException
 } from "@/constants/exceptions";
 import { createElysia } from "@/libs/elysia";
 import { lucia } from "@/libs/luciaAuth";
@@ -11,6 +12,8 @@ import { alphabet, generateRandomString } from "oslo/crypto";
 import authModel from "@/models/auth.model";
 import { t } from "elysia";
 import lokiLogger from "@/libs/lokiLogger";
+import { checkAuthRateLimit } from "@/libs/aiRateLimit";
+import { getClientIp } from "@/utils/clientIp";
 
 export default createElysia()
   .use(authModel)
@@ -22,11 +25,19 @@ export default createElysia()
     },
     cookie,
     set,
+    request,
+    server,
     env: {
       DOMAIN,
       PASSWORD_PEPPER: passwordPepper
     },
   }: any) => {
+    const ip = getClientIp(request, server);
+    const rate = checkAuthRateLimit(`signup:${ip}`);
+    if (!rate.allowed) {
+      throw new TooManyRequestsException(`Too many attempts. Retry in ${rate.retryAfterSeconds ?? 60}s.`);
+    }
+
     const existingUser = await prismaClient.user.findUnique({
       where: {
         email,

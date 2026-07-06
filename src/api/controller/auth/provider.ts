@@ -8,6 +8,13 @@ import { t } from "elysia";
 export default createElysia().get(
   "/:provider",
   async ({ params: { provider }, cookie, set }: any) => {
+    // Hard allowlist: Google is the only permitted provider. This holds even if
+    // GitHub/Discord/Facebook credentials are present in the environment, and shrinks
+    // the OAuth account-linking attack surface (see providerCallback).
+    if (provider !== "google") {
+      throw new BadRequestException(`OAuth provider '${provider}' is not allowed`);
+    }
+
     const providerInstance = oauthProviders[provider as OAuthProvider];
 
     if (!providerInstance) {

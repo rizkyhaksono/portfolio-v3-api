@@ -1,14 +1,22 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
-import { BadRequestException } from "@/constants/exceptions";
+import { BadRequestException, TooManyRequestsException } from "@/constants/exceptions";
 import { generateId } from "lucia";
 import { sha256 } from "@oslojs/crypto/sha2";
 import { encodeHexLowerCase } from "@oslojs/encoding";
+import { checkAuthRateLimit } from "@/libs/aiRateLimit";
+import { getClientIp } from "@/utils/clientIp";
 
 export default createElysia().post(
   "/password-reset/request",
-  async ({ body }: { body: { email: string } }) => {
+  async ({ body, request, server }: { body: { email: string }; request: Request; server: any }) => {
+    const ip = getClientIp(request, server);
+    const rate = checkAuthRateLimit(`pwreset:${ip}`);
+    if (!rate.allowed) {
+      throw new TooManyRequestsException(`Too many requests. Retry in ${rate.retryAfterSeconds ?? 60}s.`);
+    }
+
     const user = await prismaClient.user.findUnique({
       where: { email: body.email },
     });

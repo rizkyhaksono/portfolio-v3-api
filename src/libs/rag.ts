@@ -2,10 +2,22 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { getSupabaseProjects, getSupabaseCareers, getSupabaseEducations } from "@/libs/supabaseData";
 
-const EMBEDDING_MODEL = process.env.GEMINI_EMBEDDING_MODEL ?? "text-embedding-004";
+const EMBEDDING_MODEL = process.env.GEMINI_EMBEDDING_MODEL ?? "gemini-embedding-001";
 const TOP_K = 5;
 
+// Free-tier quota protection: cache embeddings by text so repeated questions and
+// re-indexing of unchanged content don't re-hit the embedding API. Simple LRU.
+const EMBED_CACHE_MAX = 200;
+const embedCache = new Map<string, number[]>();
+
+function cacheKey(text: string): string {
+  return text.trim().toLowerCase();
+}
+
 function cosineSimilarity(a: number[], b: number[]): number {
+  // Guard against mixed embedding dimensions (e.g. left over from an older model):
+  // comparing vectors of different lengths would read past the array and yield NaN.
+  if (a.length !== b.length) return 0;
   let dot = 0;
   let normA = 0;
   let normB = 0;
@@ -22,10 +34,24 @@ async function embedText(text: string): Promise<number[]> {
   const apiKey = process.env.GENERATIVE_AI_API_KEY;
   if (!apiKey) throw new Error("GENERATIVE_AI_API_KEY is not configured");
 
+  const key = cacheKey(text);
+  const cached = embedCache.get(key);
+  if (cached) {
+    embedCache.delete(key);
+    embedCache.set(key, cached); // refresh recency
+    return cached;
+  }
+
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: EMBEDDING_MODEL });
   const result = await model.embedContent(text);
-  return result.embedding.values;
+  const values = result.embedding.values;
+
+  embedCache.set(key, values);
+  if (embedCache.size > EMBED_CACHE_MAX) {
+    embedCache.delete(embedCache.keys().next().value as string);
+  }
+  return values;
 }
 
 export async function indexPortfolioContent(): Promise<{ indexed: number }> {
@@ -62,23 +88,17 @@ export async function indexPortfolioContent(): Promise<{ indexed: number }> {
     });
   }
 
+  // Wipe first so a change of embedding model can never leave mixed-dimension
+  // vectors behind (which would break cosine similarity). Rebuild from scratch.
+  await prismaClient.portfolioEmbedding.deleteMany({});
+
   let indexed = 0;
   for (const chunk of chunks) {
     const embedding = await embedText(chunk.content);
-    await prismaClient.portfolioEmbedding.upsert({
-      where: {
-        sourceType_sourceId: {
-          sourceType: chunk.sourceType,
-          sourceId: chunk.sourceId,
-        },
-      },
-      create: {
+    await prismaClient.portfolioEmbedding.create({
+      data: {
         sourceType: chunk.sourceType,
         sourceId: chunk.sourceId,
-        content: chunk.content,
-        embedding,
-      },
-      update: {
         content: chunk.content,
         embedding,
       },

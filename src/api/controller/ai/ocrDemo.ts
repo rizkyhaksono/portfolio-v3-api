@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { t } from "elysia";
 import { createElysia } from "@/libs/elysia";
-import { checkAiRateLimit } from "@/libs/aiRateLimit";
-import { GEMINI_MODEL } from "@/libs/geminiChat";
+import { checkAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
+import { GEMINI_MODEL, MAX_OUTPUT_TOKENS } from "@/libs/geminiChat";
 import { getClientIp } from "@/utils/clientIp";
 
 const ALLOWED_MIME = ["image/png", "image/jpeg", "image/webp"];
@@ -41,6 +41,10 @@ export default createElysia().post(
         data: null,
       };
     }
+    if (!checkPublicDailyBudget().allowed) {
+      set.status = 429;
+      return { status: 429, message: "Daily public AI limit reached. Try again tomorrow.", data: null };
+    }
 
     if (!ALLOWED_MIME.includes(body.mimeType)) {
       set.status = 400;
@@ -63,7 +67,10 @@ export default createElysia().post(
         : `You are a document data extractor. Classify the document, then extract its key fields. Respond with ONLY JSON: {"documentType": string, "fields": object, "summary": string}. Use null for fields that are not present.`;
 
     const genAI = new GoogleGenerativeAI(process.env.GENERATIVE_AI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+    const model = genAI.getGenerativeModel({
+      model: GEMINI_MODEL,
+      generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
+    });
 
     let raw: string;
     try {

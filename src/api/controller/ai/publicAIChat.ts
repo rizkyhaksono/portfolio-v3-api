@@ -6,9 +6,9 @@ import {
   TooManyRequestsException,
 } from "@/constants/exceptions";
 import { createElysia } from "@/libs/elysia";
-import { checkAiRateLimit } from "@/libs/aiRateLimit";
+import { checkAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
 import { retrievePortfolioContextWithSources } from "@/libs/rag";
-import { runWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL } from "@/libs/geminiChat";
+import { runWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL, MAX_OUTPUT_TOKENS, toFriendlyAiError } from "@/libs/geminiChat";
 import { getClientIp } from "@/utils/clientIp";
 
 /**
@@ -39,12 +39,17 @@ export default createElysia().post(
         `Rate limit exceeded. Retry in ${rateCheck.retryAfterSeconds ?? 60} seconds.`
       );
     }
+    // Protect the shared free-tier daily quota from anonymous abuse.
+    if (!checkPublicDailyBudget().allowed) {
+      throw new TooManyRequestsException("Daily public AI limit reached. Please try again tomorrow or sign in.");
+    }
 
     const { text } = body;
     const genAI = new GoogleGenerativeAI(process.env.GENERATIVE_AI_API_KEY);
     const model = genAI.getGenerativeModel({
       model: GEMINI_MODEL,
       systemInstruction: SYSTEM_INSTRUCTION,
+      generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
     });
 
     const { text: portfolioContext, sources } = await retrievePortfolioContextWithSources(text).catch(
@@ -64,10 +69,7 @@ export default createElysia().post(
       fullResponse = result.text;
       toolCalls = result.toolCalls;
     } catch (err) {
-      const detail = err instanceof Error ? err.message : String(err);
-      throw new InternalServerErrorException(
-        `AI model "${GEMINI_MODEL}" request failed. Details: ${detail}`
-      );
+      throw toFriendlyAiError(err);
     }
 
     const chunkSize = 4;

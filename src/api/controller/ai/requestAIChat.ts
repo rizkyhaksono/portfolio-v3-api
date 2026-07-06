@@ -10,7 +10,7 @@ import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
 import { checkAiRateLimit } from "@/libs/aiRateLimit";
 import { retrievePortfolioContext } from "@/libs/rag";
-import { runWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL } from "@/libs/geminiChat";
+import { runWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL, MAX_OUTPUT_TOKENS, toFriendlyAiError } from "@/libs/geminiChat";
 
 const MAX_HISTORY = 20;
 
@@ -42,6 +42,7 @@ export default createElysia()
       const model = genAI.getGenerativeModel({
         model: GEMINI_MODEL,
         systemInstruction: SYSTEM_INSTRUCTION,
+        generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
       });
 
       let chatRecord = chatId
@@ -105,10 +106,7 @@ export default createElysia()
         const { text: generated } = await runWithTools(model, contents);
         fullResponse = generated;
       } catch (err) {
-        const detail = err instanceof Error ? err.message : String(err);
-        throw new InternalServerErrorException(
-          `AI model "${GEMINI_MODEL}" request failed. Verify GENERATIVE_AI_API_KEY is valid and the model is accessible. Details: ${detail}`
-        );
+        throw toFriendlyAiError(err);
       }
 
       // Stream in small chunks so the client renders a visible, ChatGPT-like

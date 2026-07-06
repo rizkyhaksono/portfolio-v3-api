@@ -1,9 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { t } from "elysia";
 import { createElysia } from "@/libs/elysia";
-import { checkAiRateLimit } from "@/libs/aiRateLimit";
+import { checkAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
 import { retrievePortfolioContextWithSources } from "@/libs/rag";
-import { GEMINI_MODEL } from "@/libs/geminiChat";
+import { GEMINI_MODEL, MAX_OUTPUT_TOKENS } from "@/libs/geminiChat";
 import { getSupabaseProjects, getSupabaseCareers, getSupabaseEducations } from "@/libs/supabaseData";
 import { getClientIp } from "@/utils/clientIp";
 
@@ -60,6 +60,10 @@ export default createElysia().post(
       set.status = 429;
       return { status: 429, message: `Rate limit exceeded. Retry in ${rate.retryAfterSeconds ?? 60}s.`, data: null };
     }
+    if (!checkPublicDailyBudget().allowed) {
+      set.status = 429;
+      return { status: 429, message: "Daily public AI limit reached. Try again tomorrow.", data: null };
+    }
 
     const jd = body.jobDescription.trim();
 
@@ -101,7 +105,7 @@ Return ONLY a JSON object with EXACTLY these keys:
       const genAI = new GoogleGenerativeAI(process.env.GENERATIVE_AI_API_KEY);
       const model = genAI.getGenerativeModel({
         model: GEMINI_MODEL,
-        generationConfig: { responseMimeType: "application/json", temperature: 0.4 },
+        generationConfig: { responseMimeType: "application/json", temperature: 0.4, maxOutputTokens: MAX_OUTPUT_TOKENS },
       });
       const res = await model.generateContent(prompt);
       const text = res.response.text();

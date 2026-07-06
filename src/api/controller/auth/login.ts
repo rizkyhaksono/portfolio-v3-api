@@ -1,4 +1,4 @@
-import { BadRequestException } from "@/constants/exceptions";
+import { BadRequestException, TooManyRequestsException } from "@/constants/exceptions";
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
 import authModel from "@/models/auth.model";
@@ -6,6 +6,8 @@ import { password as bunPassword } from "bun";
 import { lucia } from "@/libs/luciaAuth";
 import { t } from "elysia";
 import lokiLogger from "@/libs/lokiLogger";
+import { checkAuthRateLimit } from "@/libs/aiRateLimit";
+import { getClientIp } from "@/utils/clientIp";
 
 export default createElysia()
   .use(authModel)
@@ -16,20 +18,30 @@ export default createElysia()
     },
     cookie,
     set,
+    request,
+    server,
     env: {
       DOMAIN,
       PASSWORD_PEPPER
     },
   }: any) => {
+    const ip = getClientIp(request, server);
+    const rate = checkAuthRateLimit(`login:${ip}`);
+    if (!rate.allowed) {
+      throw new TooManyRequestsException(`Too many login attempts. Retry in ${rate.retryAfterSeconds ?? 60}s.`);
+    }
+
     const user = await prismaClient.user.findUnique({
       where: {
         email,
       },
     });
 
+    // Generic message for both branches — avoids user enumeration (don't reveal
+    // whether the email exists vs the password was wrong).
     if (!user?.passwordSalt || !user?.hashedPassword) {
-      lokiLogger.error({ message: "User not found", email });
-      throw new BadRequestException("User not found.");
+      lokiLogger.error({ message: "Login failed: user not found", email });
+      throw new BadRequestException("Invalid email or password.");
     }
 
     const passwordPepper = PASSWORD_PEPPER;
@@ -45,8 +57,8 @@ export default createElysia()
         user.hashedPassword
       ))
     ) {
-      lokiLogger.error({ message: "Password is invalid", email });
-      throw new BadRequestException("Password is invalid.");
+      lokiLogger.error({ message: "Login failed: invalid password", email });
+      throw new BadRequestException("Invalid email or password.");
     }
 
     try {

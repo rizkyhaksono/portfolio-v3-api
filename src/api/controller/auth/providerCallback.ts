@@ -41,6 +41,11 @@ interface FacebookUserInfo {
 export default createElysia().get(
   "/:provider/callback",
   async ({ params: { provider }, query, cookie, set }: any) => {
+    // Google-only allowlist (matches the initiate route). Rejects any other provider.
+    if (provider !== "google") {
+      throw new BadRequestException(`OAuth provider '${provider}' is not allowed`);
+    }
+
     const { code, state } = query as { code?: string; state?: string };
     const storedState = cookie.oauth_state.value;
     const codeVerifier = cookie.oauth_code_verifier.value;
