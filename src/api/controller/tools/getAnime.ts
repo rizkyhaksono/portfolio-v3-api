@@ -1,3 +1,4 @@
+import { BadGatewayException } from "@/constants/exceptions";
 import { createElysia } from "@/libs/elysia";
 
 const USER_AGENT = "portfolio-rizky/1.0 (https://rizky.dev)";
@@ -67,7 +68,13 @@ async function nekosApi(tag?: string): Promise<string> {
 const CATEGORY_SOURCES: Record<string, UrlResolver[]> = {
   waifu: [() => nekosBest("waifu"), () => nekosApi("girl"), () => waifuPics("waifu"), () => nekosLife("waifu")],
   neko: [() => nekosBest("neko"), () => purrbot("neko", "img"), () => nekosApi("catgirl"), () => waifuPics("neko"), () => nekosLife("neko")],
-  cringe: [() => nekosBest("baka"), () => waifuPics("cringe"), () => nekosLife("baka")],
+  cringe: [
+    () => nekosBest("baka"),
+    () => nekosApi(),
+    () => waifuPics("cringe"),
+    () => purrbot("facepalm", "gif"),
+    () => nekosLife("baka"),
+  ],
   blush: [() => nekosBest("blush"), () => waifuPics("blush"), () => purrbot("blush", "gif")],
   dance: [() => nekosBest("dance"), () => purrbot("dance", "gif"), () => waifuPics("dance")],
 };
@@ -86,10 +93,11 @@ async function streamAnimeImage(category: string): Promise<Response> {
       return new Response(imgRes.body, { status: 200, headers: { "Content-Type": contentType } });
     } catch (error) {
       lastError = error;
-      // Try the next provider.
+      console.warn(`[anime/${category}] provider failed:`, String(error));
     }
   }
-  throw new Error(`Failed to fetch anime ${category} from all providers: ${String(lastError)}`);
+  console.error(`[anime/${category}] all providers failed. Last error:`, String(lastError));
+  throw new BadGatewayException(`Anime ${category} image service unavailable`);
 }
 
 export default createElysia()
