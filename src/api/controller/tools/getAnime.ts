@@ -71,8 +71,8 @@ const CATEGORY_SOURCES: Record<string, UrlResolver[]> = {
   cringe: [
     () => nekosBest("baka"),
     () => nekosApi(),
+    () => purrbot("slap", "gif"),
     () => waifuPics("cringe"),
-    () => purrbot("facepalm", "gif"),
     () => nekosLife("baka"),
   ],
   blush: [() => nekosBest("blush"), () => waifuPics("blush"), () => purrbot("blush", "gif")],
