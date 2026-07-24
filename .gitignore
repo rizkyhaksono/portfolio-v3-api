@@ -43,6 +43,6 @@ yarn-error.log*
 package-lock.json
 **/*.bun
 
-# docker compose
-docker-compose*.yml
-docker-compose*.yaml
+# docker compose local overrides only (keep docker-compose.yml for Portainer)
+docker-compose.override.yml
+docker-compose.override.yaml
