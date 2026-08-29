@@ -6,7 +6,7 @@ export const docs = swagger({
   scalarConfig: {
     theme: "mars",
     darkMode: true,
-    favicon: "https://nateee.com/favicon.ico",
+    favicon: "https://natee.my.id/favicon.ico",
     metaData: {
       title: "Portfolio v3 API Documentation",
       description: "Comprehensive API documentation for Portfolio v3 backend services.",
@@ -69,7 +69,7 @@ All list endpoints support cursor-based pagination:
       {
         url: process.env.NODE_ENV === "development"
           ? `http://localhost:${process.env.PORT ?? 3031}`
-          : "https://api.nateee.com",
+          : "https://api.natee.my.id",
         description: process.env.NODE_ENV === "development" ? "Development server" : "Production server"
       },
       {
@@ -77,7 +77,7 @@ All list endpoints support cursor-based pagination:
         description: "Natee's production server - my.id domain"
       },
       {
-        url: "https://api.nateee.com",
+        url: "https://api.natee.my.id",
         description: "Natee's production server - .com domain"
       }
     ],

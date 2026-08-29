@@ -2,7 +2,7 @@ import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
 
-const BASE_URL = "https://nateee.com";
+const BASE_URL = "https://natee.my.id";
 const FEED_TITLE = "Rizky Haksono — Portfolio";
 const FEED_DESCRIPTION =
   "Projects, work experience, and updates from Rizky Haksono's portfolio.";
