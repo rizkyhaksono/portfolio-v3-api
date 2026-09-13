@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { Content } from "@google/generative-ai";
 import { t } from "elysia";
 import { createElysia } from "@/libs/elysia";
-import { checkAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
+import { checkPublicAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
 import { retrievePortfolioContextWithSources } from "@/libs/rag";
 import { runWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL, MAX_OUTPUT_TOKENS } from "@/libs/geminiChat";
 import { getClientIp } from "@/utils/clientIp";
@@ -32,7 +32,7 @@ export default createElysia().post(
     }
 
     const ip = getClientIp(request, server);
-    const rateCheck = checkAiRateLimit(`ip-ask:${ip}`);
+    const rateCheck = checkPublicAiRateLimit(`ip-ask:${ip}`);
     if (!rateCheck.allowed) {
       set.status = 429;
       return {

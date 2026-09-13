@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { t } from "elysia";
 import { createElysia } from "@/libs/elysia";
-import { checkAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
+import { checkPublicAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
 import { retrievePortfolioContextWithSources } from "@/libs/rag";
 import { GEMINI_MODEL, MAX_OUTPUT_TOKENS } from "@/libs/geminiChat";
 import { getSupabaseProjects, getSupabaseCareers, getSupabaseEducations } from "@/libs/supabaseData";
@@ -55,7 +55,7 @@ export default createElysia().post(
     }
 
     const ip = getClientIp(request, server);
-    const rate = checkAiRateLimit(`ip-jd:${ip}`);
+    const rate = checkPublicAiRateLimit(`ip-jd:${ip}`);
     if (!rate.allowed) {
       set.status = 429;
       return { status: 429, message: `Rate limit exceeded. Retry in ${rate.retryAfterSeconds ?? 60}s.`, data: null };

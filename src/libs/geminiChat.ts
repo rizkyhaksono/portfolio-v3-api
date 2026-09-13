@@ -15,10 +15,9 @@ export function toFriendlyAiError(err: unknown): Error {
   return new ServiceUnavailableException("Etan AI is temporarily unavailable. Please try again shortly.");
 }
 
-// Keep this on a FREE-TIER model only (e.g. gemini-3-flash-preview, gemini-2.5-flash).
-// Never point it at a Pro model (gemini-2.5-pro, gemini-3.1-pro*) — those have no free
-// tier and require a billing account.
-export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3-flash-preview";
+// Keep this on a FREE-TIER Flash model only. gemini-3.5-flash is GA; never point it
+// at a Pro model (gemini-*-pro) — those require billing and burn quota faster.
+export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.5-flash";
 export const MAX_OUTPUT_TOKENS = 1024;
 
 export const SYSTEM_INSTRUCTION = `

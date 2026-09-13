@@ -1,9 +1,11 @@
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS = 10;
+const PUBLIC_MAX_REQUESTS = 5;
 
 const buckets = new Map<string, number[]>();
+const publicBuckets = new Map<string, number[]>();
 const authBuckets = new Map<string, number[]>();
-const allStores = [buckets, authBuckets];
+const allStores = [buckets, publicBuckets, authBuckets];
 let lastSweep = Date.now();
 
 // Periodically drop buckets whose timestamps have all aged out, so the Maps can't
@@ -23,7 +25,7 @@ function sweep(now: number) {
 // Global daily budget across ALL public/anonymous AI endpoints. On the Gemini free
 // tier the daily request quota (RPD) is shared by one API key, so abuse of the public
 // endpoints could exhaust the owner's own allowance. This caps total public calls/day.
-const DAILY_PUBLIC_BUDGET = Number(process.env.AI_PUBLIC_DAILY_BUDGET ?? 300);
+const DAILY_PUBLIC_BUDGET = Number(process.env.AI_PUBLIC_DAILY_BUDGET ?? 80);
 const DAY_MS = 24 * 60 * 60 * 1000;
 let dailyCount = 0;
 let dailyResetAt = Date.now() + DAY_MS;
@@ -61,6 +63,12 @@ function slidingWindow(
 export function checkAiRateLimit(userId: string): { allowed: boolean; retryAfterSeconds?: number } {
   sweep(Date.now());
   return slidingWindow(buckets, userId, MAX_REQUESTS);
+}
+
+/** Anonymous/public AI endpoints — stricter than signed-in chat. */
+export function checkPublicAiRateLimit(ip: string): { allowed: boolean; retryAfterSeconds?: number } {
+  sweep(Date.now());
+  return slidingWindow(publicBuckets, ip, PUBLIC_MAX_REQUESTS);
 }
 
 // Stricter limiter for authentication endpoints (login/signup/reset) — brute-force

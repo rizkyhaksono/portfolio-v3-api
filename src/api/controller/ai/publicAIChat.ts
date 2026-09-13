@@ -6,7 +6,7 @@ import {
   TooManyRequestsException,
 } from "@/constants/exceptions";
 import { createElysia } from "@/libs/elysia";
-import { checkAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
+import { checkPublicAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
 import { retrievePortfolioContextWithSources } from "@/libs/rag";
 import { runWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL, MAX_OUTPUT_TOKENS, toFriendlyAiError } from "@/libs/geminiChat";
 import { getClientIp } from "@/utils/clientIp";
@@ -33,7 +33,7 @@ export default createElysia().post(
     }
 
     const ip = getClientIp(request, server);
-    const rateCheck = checkAiRateLimit(`ip:${ip}`);
+    const rateCheck = checkPublicAiRateLimit(`ip:${ip}`);
     if (!rateCheck.allowed) {
       throw new TooManyRequestsException(
         `Rate limit exceeded. Retry in ${rateCheck.retryAfterSeconds ?? 60} seconds.`
