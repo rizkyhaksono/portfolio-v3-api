@@ -1,4 +1,4 @@
-# Portainer Swarm stack: portfolio-natee-v3
+# Portainer Swarm stack: portfolio-natee-v3 (api + web)
 # Requires external networks from natee-database + natee-infra.
 # Build on deploy (Portainer Git) or: docker build -t portfolio-natee-v3-api:latest .
 
@@ -26,6 +26,7 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       GENERATIVE_AI_API_KEY: ${GENERATIVE_AI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
+      GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}
       AI_PUBLIC_DAILY_BUDGET: ${AI_PUBLIC_DAILY_BUDGET:-80}
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
@@ -57,6 +58,57 @@ services:
       resources:
         limits:
           memory: 384M
+        reservations:
+          memory: 128M
+
+  # Frontend (Next.js) — built by portfolio-v3 GitHub Actions and loaded onto the node over SSH.
+  # replicas: 0 until runtime env is confirmed; scale up manually in Portainer.
+  # Nginx Proxy Manager reaches it on natee_edge_net at portfolio-natee-v3_web:3000.
+  web:
+    image: portfolio-v3-web:latest
+    environment:
+      NODE_ENV: production
+      DOMAIN: ${WEB_DOMAIN:-}
+      API_URL: ${WEB_API_URL:-http://api:3121}
+      SUPABASE_SERVICE_ROLE_KEY: ${WEB_SUPABASE_SERVICE_ROLE_KEY:-}
+      GH_READ_USER_TOKEN_PERSONAL: ${WEB_GH_READ_USER_TOKEN_PERSONAL:-}
+      DEVTO_KEY: ${WEB_DEVTO_KEY:-}
+      WAKATIME_API_KEY: ${WEB_WAKATIME_API_KEY:-}
+      SPOTIFY_CLIENT_ID: ${WEB_SPOTIFY_CLIENT_ID:-}
+      SPOTIFY_CLIENT_SECRET: ${WEB_SPOTIFY_CLIENT_SECRET:-}
+      SPOTIFY_REFRESH_TOKEN: ${WEB_SPOTIFY_REFRESH_TOKEN:-}
+      UMAMI_API_KEY: ${WEB_UMAMI_API_KEY:-}
+      UMAMI_API_URL: ${WEB_UMAMI_API_URL:-}
+      UMAMI_WEBSITE_ID: ${WEB_UMAMI_WEBSITE_ID:-}
+      UMAMI_USERNAME: ${WEB_UMAMI_USERNAME:-}
+      UMAMI_PASSWORD: ${WEB_UMAMI_PASSWORD:-}
+      OPENWEATHERMAP_API_KEY: ${WEB_OPENWEATHERMAP_API_KEY:-}
+      MONKEYTYPE_API_KEY: ${WEB_MONKEYTYPE_API_KEY:-}
+    networks:
+      - default
+      - natee_edge_net
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bun",
+          "-e",
+          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    deploy:
+      replicas: 0
+      restart_policy:
+        condition: on-failure
+      update_config:
+        order: start-first
+        failure_action: rollback
+      resources:
+        limits:
+          memory: 512M
         reservations:
           memory: 128M
 

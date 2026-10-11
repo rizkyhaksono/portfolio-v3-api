@@ -18,7 +18,6 @@ import getStarWars from "./getStarWars";
 import getQRCode from "./getQRCode";
 import getIPInfo from "./getIPInfo";
 import getChess from "./getChess";
-import getCompiler from "./getCompiler";
 import getDownloader from "./getDownloader";
 
 export {
@@ -42,6 +41,5 @@ export {
   getQRCode,
   getIPInfo,
   getChess,
-  getCompiler,
   getDownloader,
 }

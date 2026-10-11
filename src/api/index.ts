@@ -95,7 +95,6 @@ import {
   getQRCode,
   getIPInfo,
   getChess,
-  getCompiler,
   getDownloader,
 } from "./controller/tools";
 import { getRSS } from "./controller/rss";
@@ -211,7 +210,6 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(getQRCode)
       .use(getIPInfo)
       .use(getChess)
-      .use(getCompiler)
       .use(getDownloader)
   )
   .group("/rss", (api) =>
