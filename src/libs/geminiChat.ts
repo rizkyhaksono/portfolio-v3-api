@@ -1,6 +1,8 @@
-import type { Content, GoogleGenerativeAI, Part } from "@google/generative-ai";
+import { FinishReason, FunctionCallingMode } from "@google/generative-ai";
+import type { Content, EnhancedGenerateContentResponse, GenerationConfig, GoogleGenerativeAI, Part } from "@google/generative-ai";
 import { portfolioToolDeclarations, executePortfolioTool } from "@/libs/geminiTools";
-import { ServiceUnavailableException, TooManyRequestsException } from "@/constants/exceptions";
+import { BadGatewayException, ServiceUnavailableException, TooManyRequestsException } from "@/constants/exceptions";
+import logger from "@/libs/lokiLogger";
 
 /**
  * Maps a raw Gemini SDK error to a friendly client-facing exception WITHOUT retrying
@@ -8,17 +10,34 @@ import { ServiceUnavailableException, TooManyRequestsException } from "@/constan
  * TooManyRequestsException; anything else a ServiceUnavailableException.
  */
 export function toFriendlyAiError(err: unknown): Error {
+  const e = (err ?? {}) as {
+    status?: number;
+    finishReason?: string;
+    response?: { candidates?: { finishReason?: string }[] };
+  };
   const msg = err instanceof Error ? err.message : String(err);
+  logger.error(
+    { status: e.status, message: msg, finishReason: e.finishReason ?? e.response?.candidates?.[0]?.finishReason },
+    "Gemini request failed"
+  );
+  if (err instanceof BadGatewayException) return err;
   if (/\b429\b|RESOURCE_EXHAUSTED|quota|rate.?limit/i.test(msg)) {
     return new TooManyRequestsException("Etan AI is busy right now (usage limit). Please try again in a minute.");
   }
   return new ServiceUnavailableException("Etan AI is temporarily unavailable. Please try again shortly.");
 }
 
-// Keep this on a FREE-TIER Flash model only. gemini-3.5-flash is GA; never point it
-// at a Pro model (gemini-*-pro) — those require billing and burn quota faster.
-export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.5-flash";
-export const MAX_OUTPUT_TOKENS = 1024;
+// Keep this on a FREE-TIER Flash model only; never point it at a Pro model
+// (gemini-*-pro) — those require billing and burn quota faster.
+export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.6-flash";
+// Thinking tokens count toward this cap; too low and replies come back empty (MAX_TOKENS).
+export const MAX_OUTPUT_TOKENS = 4096;
+// The legacy SDK's GenerationConfig type predates thinkingConfig, hence the cast.
+// Never also send thinkingBudget: the API rejects both together with a 400.
+export const GENERATION_CONFIG = {
+  maxOutputTokens: MAX_OUTPUT_TOKENS,
+  thinkingConfig: { thinkingLevel: "low" },
+} as GenerationConfig;
 
 export const SYSTEM_INSTRUCTION = `
 ### IDENTITY AND OWNERSHIP
@@ -40,6 +59,19 @@ export const SYSTEM_INSTRUCTION = `
 export interface ToolCall {
   name: string;
   args: Record<string, unknown>;
+}
+
+// A reply that did not finish with STOP (e.g. MAX_TOKENS) is truncated or empty, and the
+// SDK's text() would hand back "" for it, so fail loudly instead of saving/streaming it.
+export function finishedText(response: EnhancedGenerateContentResponse): string {
+  const finishReason = response.candidates?.[0]?.finishReason;
+  const text = finishReason === FinishReason.STOP ? response.text() : "";
+  if (!text.trim()) {
+    throw Object.assign(new BadGatewayException("The reply was cut off. Please try a shorter question."), {
+      finishReason,
+    });
+  }
+  return text;
 }
 
 /**
@@ -66,9 +98,10 @@ export async function runWithTools(
     const functionCalls = parts.filter((p) => p.functionCall);
 
     if (functionCalls.length === 0) {
-      return { text: response.response.text(), toolCalls };
+      return { text: finishedText(response.response), toolCalls };
     }
 
+    // Push the model's parts untouched: they carry thought signatures the API requires back.
     currentContents.push({ role: "model", parts });
 
     const responseParts: Part[] = [];
@@ -84,6 +117,10 @@ export async function runWithTools(
     currentContents.push({ role: "user", parts: responseParts });
   }
 
-  const final = await model.generateContent({ contents: currentContents });
-  return { text: final.response.text(), toolCalls };
+  const final = await model.generateContent({
+    contents: currentContents,
+    tools: [{ functionDeclarations: portfolioToolDeclarations as never }],
+    toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.NONE } },
+  });
+  return { text: finishedText(final.response), toolCalls };
 }

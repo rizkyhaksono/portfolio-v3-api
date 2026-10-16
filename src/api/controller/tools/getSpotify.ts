@@ -94,7 +94,7 @@ export default createElysia()
     },
   })
 
-  .get("/now-playing", async ({ query }) => {
+  .get("/now-playing", async ({ query }: { query: { token: string } }) => {
     const { token } = query;
 
     if (!token) {
@@ -147,7 +147,7 @@ export default createElysia()
     },
   })
 
-  .get("/recently-played", async ({ query }) => {
+  .get("/recently-played", async ({ query }: { query: { token: string; limit?: string } }) => {
     const { token, limit = "10" } = query;
 
     if (!token) {
@@ -193,7 +193,7 @@ export default createElysia()
     },
   })
 
-  .get("/top-tracks", async ({ query }) => {
+  .get("/top-tracks", async ({ query }: { query: { token: string; time_range?: "short_term" | "medium_term" | "long_term"; limit?: string } }) => {
     const { token, time_range = "medium_term", limit = "10" } = query;
 
     if (!token) {
@@ -243,7 +243,7 @@ export default createElysia()
     },
   })
 
-  .get("/search", async ({ query }) => {
+  .get("/search", async ({ query }: { query: { q: string; type?: string; limit?: string } }) => {
     const { q, type = "track", limit = "10" } = query;
 
     if (!q) {

@@ -36,8 +36,6 @@ import {
   updateAIChat,
   deleteAIChat,
   reindexPortfolio,
-  publicAIChat,
-  askResume,
   ocrDemo,
   jdMatcher,
 } from "./controller/ai";
@@ -144,8 +142,6 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(updateAIChat)
       .use(deleteAIChat)
       .use(reindexPortfolio)
-      .use(publicAIChat)
-      .use(askResume)
       .use(ocrDemo)
       .use(jdMatcher)
   )

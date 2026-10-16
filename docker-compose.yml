@@ -25,7 +25,7 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       GENERATIVE_AI_API_KEY: ${GENERATIVE_AI_API_KEY:-}
-      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.6-flash}
       GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}
       AI_PUBLIC_DAILY_BUDGET: ${AI_PUBLIC_DAILY_BUDGET:-80}
       SUPABASE_URL: ${SUPABASE_URL:-}
@@ -62,7 +62,6 @@ services:
           memory: 128M
 
   # Frontend (Next.js) — built by portfolio-v3 GitHub Actions and loaded onto the node over SSH.
-  # replicas: 0 until runtime env is confirmed; scale up manually in Portainer.
   # Nginx Proxy Manager reaches it on natee_edge_net at portfolio-natee-v3_web:3000.
   web:
     image: portfolio-v3-web:latest
@@ -93,16 +92,17 @@ services:
           "CMD",
           "bun",
           "-e",
-          "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:3000/favicon.ico').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
     deploy:
-      replicas: 0
+      replicas: 1
       restart_policy:
-        condition: on-failure
+        # any: a healthcheck kill exits 0, which on-failure would never restart
+        condition: any
       update_config:
         order: start-first
         failure_action: rollback

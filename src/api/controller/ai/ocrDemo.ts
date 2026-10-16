@@ -1,8 +1,9 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { t } from "elysia";
 import { createElysia } from "@/libs/elysia";
-import { checkPublicAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
-import { GEMINI_MODEL, MAX_OUTPUT_TOKENS } from "@/libs/geminiChat";
+import { checkPublicAiRateLimit, checkPublicDailyBudget, refundPublicDailyBudget } from "@/libs/aiRateLimit";
+import { GEMINI_MODEL, GENERATION_CONFIG, finishedText } from "@/libs/geminiChat";
+import logger from "@/libs/lokiLogger";
 import { getClientIp } from "@/utils/clientIp";
 
 const ALLOWED_MIME = ["image/png", "image/jpeg", "image/webp"];
@@ -31,21 +32,7 @@ export default createElysia().post(
       return { status: 500, message: "AI is not configured", data: null };
     }
 
-    const ip = getClientIp(request, server);
-    const rateCheck = checkPublicAiRateLimit(`ip-ocr:${ip}`);
-    if (!rateCheck.allowed) {
-      set.status = 429;
-      return {
-        status: 429,
-        message: `Rate limit exceeded. Retry in ${rateCheck.retryAfterSeconds ?? 60}s.`,
-        data: null,
-      };
-    }
-    if (!checkPublicDailyBudget().allowed) {
-      set.status = 429;
-      return { status: 429, message: "Daily public AI limit reached. Try again tomorrow.", data: null };
-    }
-
+    // Validate before the rate/budget checks so a rejected upload never spends quota.
     if (!ALLOWED_MIME.includes(body.mimeType)) {
       set.status = 400;
       return { status: 400, message: "Unsupported image type (png, jpeg, webp only)", data: null };
@@ -61,6 +48,21 @@ export default createElysia().post(
       return { status: 413, message: "Image too large (max 2MB)", data: null };
     }
 
+    const ip = getClientIp(request, server);
+    const rateCheck = checkPublicAiRateLimit(`ip-ocr:${ip}`);
+    if (!rateCheck.allowed) {
+      set.status = 429;
+      return {
+        status: 429,
+        message: `Rate limit exceeded. Retry in ${rateCheck.retryAfterSeconds ?? 60}s.`,
+        data: null,
+      };
+    }
+    if (!checkPublicDailyBudget().allowed) {
+      set.status = 429;
+      return { status: 429, message: "Daily public AI limit reached. Try again tomorrow.", data: null };
+    }
+
     const prompt =
       body.mode === "classify"
         ? `You are a document classifier. Classify this document image. Respond with ONLY JSON: {"documentType": string, "confidence": number, "language": string, "summary": string}.`
@@ -69,7 +71,7 @@ export default createElysia().post(
     const genAI = new GoogleGenerativeAI(process.env.GENERATIVE_AI_API_KEY);
     const model = genAI.getGenerativeModel({
       model: GEMINI_MODEL,
-      generationConfig: { maxOutputTokens: MAX_OUTPUT_TOKENS },
+      generationConfig: GENERATION_CONFIG,
     });
 
     let raw: string;
@@ -78,8 +80,11 @@ export default createElysia().post(
         { inlineData: { data: base64, mimeType: body.mimeType } },
         { text: prompt },
       ]);
-      raw = result.response.text();
-    } catch {
+      // Throws on a cut-off/blocked/empty reply instead of returning 200 with nothing parsed.
+      raw = finishedText(result.response);
+    } catch (err) {
+      refundPublicDailyBudget(err);
+      logger.error({ err }, "OCR demo request failed");
       set.status = 502;
       return { status: 502, message: "OCR request failed. Please try again.", data: null };
     }

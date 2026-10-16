@@ -8,6 +8,16 @@ import {
 } from "@/utils/pagination";
 import paginationModel from "@/models/pagination.model";
 
+const LINKEDIN_CERTIFICATIONS_URL = "https://www.linkedin.com/in/rizkyhaksono/details/certifications/";
+
+// Signed media.licdn.com URLs carry an `e` expiry (unix seconds); past it LinkedIn
+// answers 403 "Invalid e query string", so never hand those out.
+function isExpiredLicdn(url: string | null | undefined): boolean {
+  if (!url?.startsWith("https://media.licdn.com/")) return false;
+  // Anything not clearly in the future (missing, non-numeric/NaN, past) counts as expired.
+  return !(Number(new URL(url).searchParams.get("e")) * 1000 > Date.now());
+}
+
 export default createElysia()
   .use(paginationModel)
   .get("/recommendations", async () => {
@@ -30,11 +40,15 @@ export default createElysia()
   }) => {
     const { page, limit } = pageBasedPaginationQuerySchema.parse(query);
 
-    // Sort by date (descending), then by ID (ascending) for consistent ordering
-    const sortedCertifications = [...LINKEDIN_CERTIFICATIONS_DATA].sort((a, b) => {
+    // Sort by date (descending), then by title — ids are random per boot, so not stable
+    const sortedCertifications = LINKEDIN_CERTIFICATIONS_DATA.map((cert) => ({
+      ...cert,
+      link: isExpiredLicdn(cert.link) ? LINKEDIN_CERTIFICATIONS_URL : cert.link,
+      image: isExpiredLicdn(cert.image) ? null : cert.image,
+    })).sort((a, b) => {
       const dateDiff = b.issued.getTime() - a.issued.getTime();
       if (dateDiff !== 0) return dateDiff;
-      return a.id - b.id;
+      return a.title.localeCompare(b.title);
     });
 
     const paginatedResponse = createPageBasedPaginatedResponse(

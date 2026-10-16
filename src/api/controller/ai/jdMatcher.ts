@@ -1,9 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { t } from "elysia";
 import { createElysia } from "@/libs/elysia";
-import { checkPublicAiRateLimit, checkPublicDailyBudget } from "@/libs/aiRateLimit";
+import { checkPublicAiRateLimit, checkPublicDailyBudget, refundPublicDailyBudget } from "@/libs/aiRateLimit";
 import { retrievePortfolioContextWithSources } from "@/libs/rag";
-import { GEMINI_MODEL, MAX_OUTPUT_TOKENS } from "@/libs/geminiChat";
+import { GEMINI_MODEL, GENERATION_CONFIG } from "@/libs/geminiChat";
+import logger from "@/libs/lokiLogger";
 import { getSupabaseProjects, getSupabaseCareers, getSupabaseEducations } from "@/libs/supabaseData";
 import { getClientIp } from "@/utils/clientIp";
 
@@ -105,14 +106,16 @@ Return ONLY a JSON object with EXACTLY these keys:
       const genAI = new GoogleGenerativeAI(process.env.GENERATIVE_AI_API_KEY);
       const model = genAI.getGenerativeModel({
         model: GEMINI_MODEL,
-        generationConfig: { responseMimeType: "application/json", temperature: 0.4, maxOutputTokens: MAX_OUTPUT_TOKENS },
+        generationConfig: { ...GENERATION_CONFIG, responseMimeType: "application/json" },
       });
       const res = await model.generateContent(prompt);
       const text = res.response.text();
       const cleaned = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
       const parsed = JSON.parse(cleaned) as Record<string, unknown>;
       result = coerceResult(parsed);
-    } catch {
+    } catch (err) {
+      refundPublicDailyBudget(err);
+      logger.error({ err }, "JD matcher request failed");
       set.status = 502;
       return { status: 502, message: "Could not analyze the job description. Please try again.", data: null };
     }

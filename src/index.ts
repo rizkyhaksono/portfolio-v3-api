@@ -6,7 +6,8 @@ import { instrumentation } from "./libs/instrumentation";
 import { lookupIP } from "./utils/ipGeoLookup";
 import { getAllowedOrigins } from "./constants/corsOrigins";
 
-const api = baseElysia()
+// AI chat runs a multi-round tool loop before its first byte; Elysia's default 30s idle cut drops it.
+const api = baseElysia({ serve: { idleTimeout: 120 } })
   .use(cors({
     origin: getAllowedOrigins(),
     allowedHeaders: ["Content-Type", "Authorization"],

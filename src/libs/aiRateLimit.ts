@@ -1,3 +1,5 @@
+import { GoogleGenerativeAIFetchError } from "@google/generative-ai";
+
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS = 10;
 const PUBLIC_MAX_REQUESTS = 5;
@@ -39,6 +41,16 @@ export function checkPublicDailyBudget(): { allowed: boolean } {
   if (dailyCount >= DAILY_PUBLIC_BUDGET) return { allowed: false };
   dailyCount++;
   return { allowed: true };
+}
+
+/**
+ * Gives back a budget slot only when Gemini rejected the call unserved (429/5xx), so outages
+ * don't drain the day. A reply that came back unusable (cut off, blocked, bad JSON) still spent
+ * quota, and refunding it would let one caller bypass the daily cap.
+ */
+export function refundPublicDailyBudget(err: unknown): void {
+  const unserved = err instanceof GoogleGenerativeAIFetchError && (err.status === 429 || (err.status ?? 0) >= 500);
+  if (unserved && dailyCount > 0) dailyCount--;
 }
 
 function slidingWindow(
