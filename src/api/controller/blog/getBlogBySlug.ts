@@ -1,10 +1,12 @@
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { NotFoundException } from "@/constants/exceptions";
+import { isAdminRequest } from "@/libs/roleGuards";
 
-export default createElysia().get("/:slug", async ({ params: { slug } }: { params: { slug: string } }) => {
+export default createElysia().get("/:slug", async ({ params: { slug }, request }: { params: { slug: string }; request: Request }) => {
   const post = await prismaClient.blogPost.findUnique({ where: { slug } });
-  if (!post) throw new NotFoundException("Blog post not found");
+  // Drafts 404 for the public, same as a missing slug, so their existence does not leak.
+  if (!post || (!post.published && !(await isAdminRequest(request.headers)))) throw new NotFoundException("Blog post not found");
   return { status: 200, data: post };
 }, {
   detail: {

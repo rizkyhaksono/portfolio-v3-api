@@ -1,5 +1,6 @@
 import Elysia from "elysia";
 import { authGuard } from "./authGuard";
+import { lucia } from "./luciaAuth";
 import { ForbiddenException } from "@/constants/exceptions";
 
 /**
@@ -26,3 +27,15 @@ export const adminGuard = new Elysia({
  * or ADMIN role, so authGuard is equivalent — alias to it so `user` resolves correctly.
  */
 export const userGuard = authGuard;
+
+/**
+ * Non-throwing admin check for public routes that show admins more (e.g. blog drafts).
+ */
+export async function isAdminRequest(headers: Headers): Promise<boolean> {
+  const sessionId =
+    lucia.readBearerToken(headers.get("authorization") ?? "") ??
+    lucia.readSessionCookie(headers.get("cookie") ?? "");
+  if (!sessionId) return false;
+  const { user } = await lucia.validateSession(sessionId);
+  return user?.role === "ADMIN";
+}
