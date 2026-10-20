@@ -37,14 +37,14 @@ export default createElysia().get(
       const minio = await timed(async () => {
         await MinioClient.listBuckets();
       });
-      services.push({ name: "Storage (MinIO)", status: minio.ok ? "operational" : "down", latencyMs: minio.ok ? minio.ms : null, detail: minio.detail });
+      services.push({ name: "S3", status: minio.ok ? "operational" : "down", latencyMs: minio.ok ? minio.ms : null, detail: minio.detail });
     }
 
     // Config-only check on this API process. Set GENERATIVE_AI_API_KEY on the
     // API host (Portainer / docker-compose). Never put it on Azure frontend App
     // Settings or a NEXT_PUBLIC_* var — the Next app never calls Gemini.
     services.push({
-      name: "AI (Gemini)",
+      name: "AI",
       status: process.env.GENERATIVE_AI_API_KEY ? "operational" : "down",
       latencyMs: null,
       detail: process.env.GENERATIVE_AI_API_KEY ? "configured" : "not configured",
