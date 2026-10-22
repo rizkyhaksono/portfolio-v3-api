@@ -4,6 +4,7 @@ import { handleOAuthUser, createUserSession } from "@/utils/oauthUtils";
 import { BadRequestException, UnauthorizedException } from "@/constants/exceptions";
 import logger from "@/libs/lokiLogger";
 import { lucia } from "@/libs/luciaAuth";
+import { createHandoffCode } from "@/libs/oauthHandoff";
 import { t } from "elysia";
 
 interface GoogleUserInfo {
@@ -198,20 +199,18 @@ export default createElysia().get(
       // Clear OAuth cookies
       cookie.oauth_state.remove();
       cookie.oauth_code_verifier.remove();
-      
+
       logger.info({
         message: "OAuth authentication successful",
         provider,
         userId: user.id,
-        sessionId: sessionCookie.value,
       });
 
-      // Redirect to frontend with token in URL
+      // The frontend server trades this one-time code for the session via POST /auth/oauth/exchange.
       const frontendUrl = Bun.env.FRONTEND_URL || "http://localhost:3000";
-      const callbackUrl = `${frontendUrl}/auth/callback?token=${sessionCookie.value}`;
-      set.redirect = callbackUrl;
+      const callbackUrl = `${frontendUrl}/auth/callback?code=${createHandoffCode(sessionCookie.value)}`;
       set.status = 302;
-      
+
       return new Response(null, {
         status: 302,
         headers: {

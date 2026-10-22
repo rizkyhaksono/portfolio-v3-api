@@ -5,6 +5,7 @@ import {
   logout,
   provider,
   providerCallback,
+  oauthExchange,
   requestPasswordReset,
   resetPassword,
 } from "./controller/auth";
@@ -107,6 +108,7 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(logout)
       .use(provider)
       .use(providerCallback)
+      .use(oauthExchange)
       .use(requestPasswordReset)
       .use(resetPassword)
   )
