@@ -71,17 +71,21 @@ async function getTopTracks(accessToken: string, timeRange: string = "medium_ter
   return await response.json();
 }
 
+// Query strings end up in access logs and browser history, so user tokens come from the header only.
+const bearerToken = (request: Request) =>
+  request.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1] ?? null;
+
 export default createElysia()
   .get("/", async () => {
     return {
       message: "Spotify API",
       endpoints: {
-        nowPlaying: "GET /now-playing?token=USER_ACCESS_TOKEN - Get currently playing track",
-        recentlyPlayed: "GET /recently-played?token=USER_ACCESS_TOKEN&limit=10 - Get recently played tracks",
-        topTracks: "GET /top-tracks?token=USER_ACCESS_TOKEN&time_range=medium_term&limit=10 - Get top tracks",
+        nowPlaying: "GET /now-playing - Get currently playing track",
+        recentlyPlayed: "GET /recently-played?limit=10 - Get recently played tracks",
+        topTracks: "GET /top-tracks?time_range=medium_term&limit=10 - Get top tracks",
         search: "GET /search?q=query&type=track,artist,album - Search Spotify catalog",
       },
-      note: "You need to provide a user access token for personalized endpoints. Use Spotify OAuth2 flow to get one.",
+      note: "Personalized endpoints need a Spotify user access token sent as `Authorization: Bearer <token>`. Use Spotify OAuth2 flow to get one.",
       oauth: {
         authorizeUrl: "https://accounts.spotify.com/authorize",
         scopes: ["user-read-currently-playing", "user-read-recently-played", "user-top-read"],
@@ -94,14 +98,15 @@ export default createElysia()
     },
   })
 
-  .get("/now-playing", async ({ query }: { query: { token: string } }) => {
-    const { token } = query;
+  .get("/now-playing", async ({ request, set }: { request: Request; set: { status?: number } }) => {
+    const token = bearerToken(request);
 
     if (!token) {
+      set.status = 401;
       return {
         success: false,
         error: "Access token is required",
-        help: "Get your token from Spotify OAuth2 flow",
+        help: "Get your token from Spotify OAuth2 flow and send it as Authorization: Bearer <token>",
       };
     }
 
@@ -137,9 +142,6 @@ export default createElysia()
       };
     }
   }, {
-    query: t.Object({
-      token: t.String(),
-    }),
     detail: {
       tags: ["Spotify"],
       summary: "Get currently playing track",
@@ -147,10 +149,12 @@ export default createElysia()
     },
   })
 
-  .get("/recently-played", async ({ query }: { query: { token: string; limit?: string } }) => {
-    const { token, limit = "10" } = query;
+  .get("/recently-played", async ({ query, request, set }: { query: { limit?: string }; request: Request; set: { status?: number } }) => {
+    const { limit = "10" } = query;
+    const token = bearerToken(request);
 
     if (!token) {
+      set.status = 401;
       return {
         success: false,
         error: "Access token is required",
@@ -183,7 +187,6 @@ export default createElysia()
     }
   }, {
     query: t.Object({
-      token: t.String(),
       limit: t.Optional(t.String()),
     }),
     detail: {
@@ -193,10 +196,20 @@ export default createElysia()
     },
   })
 
-  .get("/top-tracks", async ({ query }: { query: { token: string; time_range?: "short_term" | "medium_term" | "long_term"; limit?: string } }) => {
-    const { token, time_range = "medium_term", limit = "10" } = query;
+  .get("/top-tracks", async ({
+    query,
+    request,
+    set,
+  }: {
+    query: { time_range?: "short_term" | "medium_term" | "long_term"; limit?: string };
+    request: Request;
+    set: { status?: number };
+  }) => {
+    const { time_range = "medium_term", limit = "10" } = query;
+    const token = bearerToken(request);
 
     if (!token) {
+      set.status = 401;
       return {
         success: false,
         error: "Access token is required",
@@ -228,7 +241,6 @@ export default createElysia()
     }
   }, {
     query: t.Object({
-      token: t.String(),
       time_range: t.Optional(t.Union([
         t.Literal("short_term"),
         t.Literal("medium_term"),
