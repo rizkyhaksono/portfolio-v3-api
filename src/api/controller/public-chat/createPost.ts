@@ -7,6 +7,16 @@ import logger from "@/libs/lokiLogger";
 import { authGuard } from "@/libs/authGuard";
 import { withAvatarUrl } from "@/utils/userProfile";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const POST_USER_SELECT = {
+  id: true,
+  name: true,
+  avatarUrl: true,
+  avatarMinioKey: true,
+  headline: true,
+} as const;
+
 export default createElysia()
   .use(publicChatModel)
   .use(authGuard)
@@ -35,65 +45,56 @@ export default createElysia()
         }
       }
 
-      if (!replyToId) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
+      // Check and insert in one Serializable transaction so two concurrent posts can't both pass.
+      const insert = () =>
+        prismaClient.$transaction(async (tx) => {
+          if (!replyToId) {
+            const dayStart = new Date(Math.floor(Date.now() / DAY_MS) * DAY_MS);
+            const existingPost = await tx.publicChatMessage.findFirst({
+              where: {
+                userId: user.id,
+                replyToId: null,
+                createdAt: {
+                  gte: dayStart,
+                  lt: new Date(dayStart.getTime() + DAY_MS),
+                },
+                deletedAt: null,
+              },
+              select: { id: true },
+            });
 
-        const existingPost = await prismaClient.publicChatMessage.findFirst({
-          where: {
-            userId: user.id,
-            replyToId: null,
-            createdAt: {
-              gte: today,
-              lt: tomorrow,
+            if (existingPost) {
+              throw new ForbiddenException(
+                "You can only post once per day. You can edit your existing post instead."
+              );
+            }
+          }
+
+          return tx.publicChatMessage.create({
+            data: {
+              message,
+              userId: user.id,
+              replyToId: replyToId || null,
             },
-            deletedAt: null,
-          },
-        });
-
-        if (existingPost) {
-          throw new ForbiddenException(
-            "You can only post once per day. You can edit your existing post instead."
-          );
-        }
-      }
-
-      const post = await prismaClient.publicChatMessage.create({
-        data: {
-          message,
-          userId: user.id,
-          replyToId: replyToId || null,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatarUrl: true,
-              avatarMinioKey: true,
-              headline: true,
-            },
-          },
-          replyTo: {
-            select: {
-              id: true,
-              message: true,
-              userId: true,
-              createdAt: true,
-              user: {
+            include: {
+              user: { select: POST_USER_SELECT },
+              replyTo: {
                 select: {
                   id: true,
-                  name: true,
-                  avatarUrl: true,
-                  avatarMinioKey: true,
-                  headline: true,
+                  message: true,
+                  userId: true,
+                  createdAt: true,
+                  user: { select: POST_USER_SELECT },
                 },
               },
             },
-          },
-        },
+          });
+        }, { isolationLevel: "Serializable" });
+
+      // P2034: Postgres aborted a conflicting serializable transaction; the retry sees the winner's post.
+      const post = await insert().catch((err: { code?: string }) => {
+        if (err?.code === "P2034") return insert();
+        throw err;
       });
 
       logger.info({
@@ -118,7 +119,7 @@ export default createElysia()
       detail: {
         tags: ["Public Chat"],
         summary: "Create a public chat message",
-        description: "Authenticated users can post once per day (top-level messages only). Replies to messages are unlimited.",
+        description: "Authenticated users can post once per UTC day (top-level messages only). Replies to messages are unlimited.",
       },
     }
   );
