@@ -53,6 +53,15 @@ import logger from "@/libs/logger";
  * ServiceUnavailableException
  */
 
+// Elysia's validation messages embed the submitted body (passwords included): never log them.
+const describeError = (code: string, error: any) =>
+  JSON.stringify({
+    code,
+    name: error?.name,
+    status: error?.status,
+    message: code === "VALIDATION" ? undefined : error?.message,
+  });
+
 const error = new Elysia()
   .use(logger)
   .error({
@@ -77,16 +86,16 @@ const error = new Elysia()
         return error instanceof NotFoundException ? error : new NotFoundException();
       case "INTERNAL_SERVER_ERROR":
         if (logestic) {
-          logestic.error(JSON.stringify({ code, error }));
+          logestic.error(describeError(code, error));
         } else {
-          console.error("Log is undefined. Error: ", { code, error });
+          console.error("Log is undefined. Error: ", describeError(code, error));
         }
         return new InternalServerErrorException();
       default:
         if (logestic) {
-          logestic.error(JSON.stringify({ code, error }));
+          logestic.error(describeError(code, error));
         } else {
-          console.error("Log is undefined. Error: ", { code, error });
+          console.error("Log is undefined. Error: ", describeError(code, error));
         }
         return error;
     }

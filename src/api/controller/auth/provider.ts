@@ -63,7 +63,6 @@ export default createElysia().get(
     logger.info({
       message: "OAuth flow initiated",
       provider,
-      redirectUrl: authUrl.toString(),
     });
 
     set.status = 302;

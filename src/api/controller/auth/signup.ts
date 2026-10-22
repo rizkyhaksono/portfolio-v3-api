@@ -45,7 +45,7 @@ export default createElysia()
     });
 
     if (existingUser) {
-      lokiLogger.error({ message: "User already exists", email });
+      lokiLogger.error({ message: "User already exists", userId: existingUser.id });
       throw new ConflictException("User already exists.");
     }
 
