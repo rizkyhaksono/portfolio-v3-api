@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
 import { prismaClient } from "@/libs/prismaDatabase";
+import { hashClientIp } from "@/utils/ipHash";
 
 /**
  * Raw-SQL store for visitor feedback / suggestions (admin-reviewable). Same lazy CREATE-TABLE
@@ -10,8 +10,6 @@ export type FeedbackCategory = "suggestion" | "bug" | "general";
 export type FeedbackStatus = "new" | "read" | "archived";
 export const FEEDBACK_CATEGORIES: FeedbackCategory[] = ["suggestion", "bug", "general"];
 export const FEEDBACK_STATUSES: FeedbackStatus[] = ["new", "read", "archived"];
-
-const SALT = process.env.IP_HASH_SALT ?? "portfolio-v3-feedback";
 
 export interface Feedback {
   id: string;
@@ -25,7 +23,7 @@ export interface Feedback {
 }
 
 function hashIp(ip: string): string {
-  return createHash("sha256").update(`${ip}:${SALT}`).digest("hex");
+  return hashClientIp(ip, "portfolio-v3-feedback");
 }
 
 let ensured = false;
