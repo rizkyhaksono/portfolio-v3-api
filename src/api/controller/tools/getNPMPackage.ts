@@ -1,5 +1,6 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
+import { TtlCache } from "@/utils/ttlCache";
 
 interface NPMAuthor {
   name: string;
@@ -38,12 +39,18 @@ function resolveRepository(
   return repo.url.replace(/^git\+/, "").replace(/\.git$/, "");
 }
 
+// Stays on the full packument: /<name>/latest lacks the dist-tags, version count and publish times returned here.
+const packageCache = new TtlCache<Record<string, unknown>>(60 * 60 * 1000);
+
 export default createElysia().get(
   "/npm",
   async ({ query }: { query: { name: string } }) => {
     const packageName = query.name;
     // Preserve scoped package slash (e.g. @org/pkg) without double-encoding
     const encodedName = encodeURIComponent(packageName).replace(/%2F/g, "/");
+
+    const cached = packageCache.get(packageName);
+    if (cached) return { status: 200, message: "Success", data: cached };
 
     try {
       const [registryRes, weeklyRes, monthlyRes] = await Promise.all([
@@ -74,28 +81,27 @@ export default createElysia().get(
 
       const latestVersion = registry["dist-tags"].latest;
 
-      return {
-        status: 200,
-        message: "Success",
-        data: {
-          name: registry.name,
-          description: registry.description ?? null,
-          version: latestVersion,
-          license: registry.license ?? null,
-          author: resolveAuthor(registry.author),
-          homepage: registry.homepage ?? null,
-          repository: resolveRepository(registry.repository),
-          keywords: registry.keywords ?? [],
-          totalVersions: Object.keys(registry.versions).length,
-          distTags: registry["dist-tags"],
-          downloads: {
-            weekly: weekly?.downloads ?? null,
-            monthly: monthly?.downloads ?? null,
-          },
-          publishedAt: registry.time[latestVersion] ?? null,
-          createdAt: registry.time["created"] ?? null,
+      const data = {
+        name: registry.name,
+        description: registry.description ?? null,
+        version: latestVersion,
+        license: registry.license ?? null,
+        author: resolveAuthor(registry.author),
+        homepage: registry.homepage ?? null,
+        repository: resolveRepository(registry.repository),
+        keywords: registry.keywords ?? [],
+        totalVersions: Object.keys(registry.versions).length,
+        distTags: registry["dist-tags"],
+        downloads: {
+          weekly: weekly?.downloads ?? null,
+          monthly: monthly?.downloads ?? null,
         },
+        publishedAt: registry.time[latestVersion] ?? null,
+        createdAt: registry.time["created"] ?? null,
       };
+      packageCache.set(packageName, data);
+
+      return { status: 200, message: "Success", data };
     } catch (error: any) {
       return {
         status: 400,
