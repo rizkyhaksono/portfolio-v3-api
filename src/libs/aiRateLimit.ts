@@ -1,93 +1,116 @@
 import { GoogleGenerativeAIFetchError } from "@google/generative-ai";
 
-const WINDOW_MS = 60 * 1000;
-const MAX_REQUESTS = 10;
-const PUBLIC_MAX_REQUESTS = 5;
-
-const buckets = new Map<string, number[]>();
-const publicBuckets = new Map<string, number[]>();
-const authBuckets = new Map<string, number[]>();
-const allStores = [buckets, publicBuckets, authBuckets];
-let lastSweep = Date.now();
-
-// Periodically drop buckets whose timestamps have all aged out, so the Maps can't
-// grow unbounded across many distinct users/IPs over a long-running process.
-function sweep(now: number) {
-  if (now - lastSweep < WINDOW_MS) return;
-  lastSweep = now;
-  for (const store of allStores) {
-    for (const [key, ts] of store) {
-      const live = ts.filter((t) => now - t < WINDOW_MS);
-      if (live.length === 0) store.delete(key);
-      else store.set(key, live);
-    }
-  }
-}
-
-// Global daily budget across ALL public/anonymous AI endpoints. On the Gemini free
-// tier the daily request quota (RPD) is shared by one API key, so abuse of the public
-// endpoints could exhaust the owner's own allowance. This caps total public calls/day.
-const DAILY_PUBLIC_BUDGET = Number(process.env.AI_PUBLIC_DAILY_BUDGET ?? 80);
+const MINUTE_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
-let dailyCount = 0;
-let dailyResetAt = Date.now() + DAY_MS;
 
-export function checkPublicDailyBudget(): { allowed: boolean } {
-  const now = Date.now();
-  if (now >= dailyResetAt) {
-    dailyCount = 0;
-    dailyResetAt = now + DAY_MS;
+let now = () => Date.now();
+
+/** Swap the clock behind every limiter and budget in this module (tests only). */
+export function setRateLimitClock(clock: () => number): void {
+  now = clock;
+}
+
+export interface RateLimitResult {
+  allowed: boolean;
+  retryAfterSeconds?: number;
+}
+
+// In-memory and per process: fine while the API runs as a single replica.
+const buckets = new Map<string, { windowMs: number; hits: number[] }>();
+let lastSweep = 0;
+
+// Periodically drop buckets whose hits have all aged out, so the Map can't grow unbounded
+// across many distinct users/IPs over a long-running process.
+function sweep(t: number) {
+  if (t - lastSweep < MINUTE_MS) return;
+  lastSweep = t;
+  for (const [key, bucket] of buckets) {
+    if (!bucket.hits.some((h) => t - h < bucket.windowMs)) buckets.delete(key);
   }
-  if (dailyCount >= DAILY_PUBLIC_BUDGET) return { allowed: false };
-  dailyCount++;
+}
+
+/** Sliding-window limiter: at most `limit` calls per `windowMs` for `key`. */
+export function checkRateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
+  const t = now();
+  sweep(t);
+  const hits = (buckets.get(key)?.hits ?? []).filter((h) => t - h < windowMs);
+  buckets.set(key, { windowMs, hits });
+
+  if (hits.length >= limit) {
+    return { allowed: false, retryAfterSeconds: Math.ceil((windowMs - (t - hits[0]!)) / 1000) };
+  }
+  hits.push(t);
   return { allowed: true };
 }
 
-/**
- * Gives back a budget slot only when Gemini rejected the call unserved (429/5xx), so outages
- * don't drain the day. A reply that came back unusable (cut off, blocked, bad JSON) still spent
- * quota, and refunding it would let one caller bypass the daily cap.
- */
-export function refundPublicDailyBudget(err: unknown): void {
-  const unserved = err instanceof GoogleGenerativeAIFetchError && (err.status === 429 || (err.status ?? 0) >= 500);
-  if (unserved && dailyCount > 0) dailyCount--;
-}
-
-function slidingWindow(
-  store: Map<string, number[]>,
-  key: string,
-  max: number
-): { allowed: boolean; retryAfterSeconds?: number } {
-  const now = Date.now();
-  const timestamps = (store.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
-
-  if (timestamps.length >= max) {
-    const oldest = Math.min(...timestamps);
-    const retryAfterSeconds = Math.ceil((WINDOW_MS - (now - oldest)) / 1000);
-    return { allowed: false, retryAfterSeconds };
-  }
-
-  timestamps.push(now);
-  store.set(key, timestamps);
-  return { allowed: true };
-}
-
-export function checkAiRateLimit(userId: string): { allowed: boolean; retryAfterSeconds?: number } {
-  sweep(Date.now());
-  return slidingWindow(buckets, userId, MAX_REQUESTS);
+export function checkAiRateLimit(key: string): RateLimitResult {
+  return checkRateLimit(`ai:${key}`, 10, MINUTE_MS);
 }
 
 /** Anonymous/public AI endpoints — stricter than signed-in chat. */
-export function checkPublicAiRateLimit(ip: string): { allowed: boolean; retryAfterSeconds?: number } {
-  sweep(Date.now());
-  return slidingWindow(publicBuckets, ip, PUBLIC_MAX_REQUESTS);
+export function checkPublicAiRateLimit(ip: string): RateLimitResult {
+  return checkRateLimit(`public-ai:${ip}`, 5, MINUTE_MS);
 }
 
-// Stricter limiter for authentication endpoints (login/signup/reset) — brute-force
-// protection. Keyed by client IP. Uses the separate authBuckets store (declared above).
-const AUTH_MAX_REQUESTS = 5;
+// Brute-force protection for login/signup/reset, keyed by client IP.
+export function checkAuthRateLimit(ip: string): RateLimitResult {
+  return checkRateLimit(`auth:${ip}`, 5, MINUTE_MS);
+}
 
-export function checkAuthRateLimit(ip: string): { allowed: boolean; retryAfterSeconds?: number } {
-  sweep(Date.now());
-  return slidingWindow(authBuckets, ip, AUTH_MAX_REQUESTS);
+/** Per-key counters that reset at 00:00 UTC. */
+function dailyCounter(limit: number) {
+  let day = -1;
+  const used = new Map<string, number>();
+  const rollover = () => {
+    const today = Math.floor(now() / DAY_MS);
+    if (today !== day) {
+      day = today;
+      used.clear();
+    }
+  };
+  return {
+    take(key: string): boolean {
+      rollover();
+      const count = used.get(key) ?? 0;
+      if (count >= limit) return false;
+      used.set(key, count + 1);
+      return true;
+    },
+    give(key: string): void {
+      rollover();
+      const count = used.get(key) ?? 0;
+      if (count > 0) used.set(key, count - 1);
+    },
+  };
+}
+
+// Gemini's free-tier daily quota (RPD) is shared by one API key, so abuse of the public
+// endpoints could exhaust the owner's own allowance. This caps total public calls/day.
+const publicDaily = dailyCounter(Number(process.env.AI_PUBLIC_DAILY_BUDGET ?? 80));
+const userDaily = dailyCounter(Number(process.env.AI_USER_DAILY_BUDGET ?? 40));
+
+/**
+ * Only calls Gemini rejected unserved (429/5xx) are refunded, so outages don't drain the day.
+ * A reply that came back unusable (cut off, blocked, bad JSON) still spent quota, and refunding
+ * it would let one caller bypass the daily cap.
+ */
+function wasUnserved(err: unknown): boolean {
+  return err instanceof GoogleGenerativeAIFetchError && (err.status === 429 || (err.status ?? 0) >= 500);
+}
+
+export function checkPublicDailyBudget(): { allowed: boolean } {
+  return { allowed: publicDaily.take("public") };
+}
+
+export function refundPublicDailyBudget(err: unknown): void {
+  if (wasUnserved(err)) publicDaily.give("public");
+}
+
+/** Signed-in chat: per-user daily cap (AI_USER_DAILY_BUDGET). */
+export function checkUserDailyBudget(userId: string): { allowed: boolean } {
+  return { allowed: userDaily.take(userId) };
+}
+
+export function refundUserDailyBudget(userId: string, err: unknown): void {
+  if (wasUnserved(err)) userDaily.give(userId);
 }

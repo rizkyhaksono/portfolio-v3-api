@@ -9,7 +9,7 @@ import { createElysia } from "@/libs/elysia";
 import aiModel from "@/models/ai.model";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
-import { checkAiRateLimit } from "@/libs/aiRateLimit";
+import { checkAiRateLimit, checkUserDailyBudget, refundUserDailyBudget } from "@/libs/aiRateLimit";
 import { retrievePortfolioContext } from "@/libs/rag";
 import { runWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL, GENERATION_CONFIG, toFriendlyAiError } from "@/libs/geminiChat";
 import logger from "@/libs/lokiLogger";
@@ -37,6 +37,9 @@ export default createElysia()
         throw new TooManyRequestsException(
           `Rate limit exceeded. Retry in ${rateCheck.retryAfterSeconds ?? 60} seconds.`
         );
+      }
+      if (!checkUserDailyBudget(user.id).allowed) {
+        throw new TooManyRequestsException("You've reached today's Etan AI limit. It resets at 00:00 UTC.");
       }
 
       const { text, chatId } = body;
@@ -121,6 +124,7 @@ export default createElysia()
           },
         });
       } catch (err) {
+        refundUserDailyBudget(user.id, err);
         // Roll back this turn so a failure leaves no orphan user message or empty new chat.
         await prismaClient.aIChatMessage
           .delete({ where: { id: userMessage.id } })
