@@ -1,9 +1,8 @@
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
-import educationModel from "@/models/education.model";
+import { idParams } from "@/models/params.model";
 
 export default createElysia()
-  .use(educationModel)
   .get("/:id", async ({
     params: { id }
   }: {
@@ -17,7 +16,7 @@ export default createElysia()
       data: education
     }
   }, {
-    body: "education.model",
+    params: idParams,
     detail: {
       tags: ["Education"],
       summary: "Get an education record by ID",

@@ -4,6 +4,7 @@ import { prismaClient } from "@/libs/prismaDatabase";
 import educationModel from "@/models/education.model";
 import { Education } from "../../../../generated/prisma/browser";
 import { adminGuard } from "@/libs/roleGuards";
+import { idParams } from "@/models/params.model";
 
 export default createElysia()
   .use(authGuard)
@@ -24,6 +25,7 @@ export default createElysia()
     })
   }, {
     body: "education.model",
+    params: idParams,
     detail: {
       tags: ["Education"],
       summary: "Update an education record",

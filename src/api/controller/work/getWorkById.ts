@@ -1,9 +1,8 @@
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
-import workModel from "@/models/work.model";
+import { idParams } from "@/models/params.model";
 
 export default createElysia()
-  .use(workModel)
   .get("/:id", async ({ params: { id } }: { params: { id: string } }) => {
     const work = await prismaClient.work.findUnique({
       where: { id },
@@ -14,7 +13,7 @@ export default createElysia()
       data: work
     }
   }, {
-    body: "work.model",
+    params: idParams,
     detail: {
       tags: ["Work"],
       summary: "Get Work by ID",

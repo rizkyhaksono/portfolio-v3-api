@@ -7,7 +7,11 @@ const create = mock(async ({ data }: { data: Record<string, unknown> }) => ({ id
 const remove = mock(async () => ({ id: "post-1" }));
 
 mock.module("@/libs/prismaDatabase", () => ({
-  prismaClient: { blogPost: { create, delete: remove }, user: { count: async () => 42 } },
+  prismaClient: {
+    blogPost: { create, delete: remove },
+    project: { delete: async () => ({ id: "p1" }) },
+    user: { count: async () => 42 },
+  },
 }));
 mock.module("@/libs/luciaAuth", () => ({
   lucia: {
@@ -66,6 +70,17 @@ describe("adminGuard on admin writes", () => {
     const res = await postBlog();
     expect(res.status).toBe(401);
     expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe("DELETE /v3/project/:id", () => {
+  const del = (id: string) =>
+    apiRoutes.handle(new Request(`http://localhost/v3/project/${id}`, { method: "DELETE", headers: { authorization: "Bearer s" } }));
+
+  it("needs no request body and validates the id", async () => {
+    role = "ADMIN";
+    expect((await del("p1")).status).toBe(200);
+    expect((await del("x".repeat(65))).status).toBe(422);
   });
 });
 

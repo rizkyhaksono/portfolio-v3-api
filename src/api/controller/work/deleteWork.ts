@@ -1,11 +1,10 @@
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
-import workModel from "@/models/work.model";
 import { adminGuard } from "@/libs/roleGuards";
+import { idParams } from "@/models/params.model";
 
 export default createElysia()
-  .use(workModel)
   .use(authGuard)
   .use(adminGuard)
   .delete("/:id", async ({ params: { id } }) => {
@@ -17,7 +16,7 @@ export default createElysia()
       message: "Work deleted successfully"
     }
   }, {
-    body: "work.model",
+    params: idParams,
     detail: {
       tags: ["Work"],
       summary: "Delete Work",

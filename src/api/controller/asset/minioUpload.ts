@@ -2,6 +2,7 @@ import ShortUniqueId from "short-unique-id";
 import MinioClient from "@/libs/minioClient";
 import { authGuard } from "@/libs/authGuard";
 import { createElysia } from "@/libs/elysia";
+import logger from "@/libs/lokiLogger";
 import { getMinioPublicLink, PRESIGN_MAX_SECONDS } from "@/utils/minioUtils";
 import { detectImageType } from "@/utils/imageType";
 import { minioModel } from "@/models/minio.model";
@@ -12,26 +13,30 @@ export default createElysia()
   .post(
     "/minio",
     async ({
-      body
+      body,
+      set,
     }: {
       body: {
         file: File;
-      }
+      };
+      set: { status?: number };
     }) => {
       try {
         const fileBuffer = await body.file.arrayBuffer();
         const { randomUUID } = new ShortUniqueId({ length: 20 });
 
-        if (!(await detectImageType(fileBuffer, ["image/png", "image/jpeg", "image/gif", "image/bmp", "image/webp"]))) {
+        const type = await detectImageType(fileBuffer, ["image/png", "image/jpeg", "image/gif", "image/bmp", "image/webp"]);
+        if (!type) {
+          set.status = 400;
           return {
             data: null,
             message: "Uploaded file is not a valid image",
           };
         }
 
-        const fileName = `${randomUUID()}.png`;
+        const fileName = `${randomUUID()}.${type.ext}`;
         const metadata = {
-          "Content-Type": body.file.type,
+          "Content-Type": type.mime,
           "Content-Length": body.file.size.toString(),
         };
 
@@ -54,9 +59,11 @@ export default createElysia()
           message: "success",
         };
       } catch (error) {
+        logger.error({ message: "MinIO upload failed", error: error instanceof Error ? error.message : "Unknown error" });
+        set.status = 500;
         return {
-          data: "There is something wrong",
-          message: error,
+          data: null,
+          message: "Upload failed. Please try again.",
         };
       }
     },

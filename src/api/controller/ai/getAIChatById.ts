@@ -3,7 +3,7 @@ import aiModel from "@/models/ai.model";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
 import { NotFoundException } from "@/constants/exceptions";
-import { t } from "elysia";
+import { idParams } from "@/models/params.model";
 
 export default createElysia()
   .use(aiModel)
@@ -36,7 +36,7 @@ export default createElysia()
       }
     };
   }, {
-    params: t.Object({ id: t.String({ minLength: 1, maxLength: 64 }) }),
+    params: idParams,
     detail: {
       tags: ["AI"],
       summary: "Get AI Chat by ID",
