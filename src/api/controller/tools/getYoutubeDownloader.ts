@@ -1,20 +1,25 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
 import { Innertube } from "youtubei.js";
+import { guardMediaRequest, MEDIA_HOSTS } from "@/utils/mediaUrl";
 
 export default createElysia({ prefix: "/youtube" })
   .get("/downloader", async ({
     query,
-    set
+    set,
+    request,
+    server
   }: {
     query: { url: string };
     set: { status: number };
+    request: Request;
+    server: any;
   }) => {
-    const { url } = query;
-    if (!url) {
+    if (!query.url) {
       set.status = 400;
       return { success: false, error: "URL parameter is required" };
     }
+    const url = guardMediaRequest(query.url, MEDIA_HOSTS.youtube, request, server).href;
 
     try {
       const youtube = await Innertube.create();
@@ -90,24 +95,27 @@ export default createElysia({ prefix: "/youtube" })
   })
   .get("/info", async ({
     query,
-    set
+    set,
+    request,
+    server
   }: {
     query: {
       url: string
     },
     set: {
       status: number
-    }
+    },
+    request: Request,
+    server: any
   }) => {
-    const { url } = query;
-
-    if (!url) {
+    if (!query.url) {
       set.status = 400;
       return {
         success: false,
         error: "URL parameter is required",
       };
     }
+    const url = guardMediaRequest(query.url, MEDIA_HOSTS.youtube, request, server).href;
 
     try {
       const youtube = await Innertube.create();
@@ -171,7 +179,9 @@ export default createElysia({ prefix: "/youtube" })
   })
   .get("/download", async ({
     query,
-    set
+    set,
+    request,
+    server
   }: {
     query: {
       url: string;
@@ -180,13 +190,16 @@ export default createElysia({ prefix: "/youtube" })
     set: {
       status: number;
     };
+    request: Request;
+    server: any;
   }) => {
-    const { url, format = "mp4" } = query;
+    const { format = "mp4" } = query;
 
-    if (!url) {
+    if (!query.url) {
       set.status = 400;
       return { success: false, error: "URL parameter is required" };
     }
+    const url = guardMediaRequest(query.url, MEDIA_HOSTS.youtube, request, server).href;
 
     try {
       const youtube = await Innertube.create();

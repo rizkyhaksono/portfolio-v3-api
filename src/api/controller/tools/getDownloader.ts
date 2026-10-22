@@ -1,5 +1,6 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
+import { ANY_MEDIA_HOST, guardMediaRequest } from "@/utils/mediaUrl";
 
 /**
  * Universal media downloader, powered by a self-hosted Cobalt instance.
@@ -68,15 +69,25 @@ async function fetchFromCobalt(url: string): Promise<DownloadResult> {
 
 export default createElysia().get(
   "/download",
-  async ({ query, set }: { query: { url: string }; set: { status?: number } }) => {
-    const { url } = query;
-    if (!url?.trim()) {
+  async ({
+    query,
+    set,
+    request,
+    server,
+  }: {
+    query: { url: string };
+    set: { status?: number };
+    request: Request;
+    server: any;
+  }) => {
+    if (!query.url?.trim()) {
       set.status = 400;
       return { status: 400, message: "A media URL is required.", data: null };
     }
+    const url = guardMediaRequest(query.url, ANY_MEDIA_HOST, request, server);
 
     try {
-      const data = await fetchFromCobalt(url);
+      const data = await fetchFromCobalt(url.href);
       return { status: 200, message: "Success", data };
     } catch (err) {
       set.status = 502;

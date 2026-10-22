@@ -1,22 +1,22 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
 import logger from "@/libs/lokiLogger";
+import { guardMediaRequest, MEDIA_HOSTS } from "@/utils/mediaUrl";
 
 /**
  * TikTok video downloader
  * Downloads TikTok videos without watermark
  */
 export default createElysia()
-  .get("/tiktok/downloader", async ({ query, set }: any) => {
-    const { url } = query;
-
-    if (!url) {
+  .get("/tiktok/downloader", async ({ query, set, request, server }: any) => {
+    if (!query.url) {
       set.status = 400;
       return {
         success: false,
         error: "URL parameter is required",
       };
     }
+    const url = guardMediaRequest(query.url, MEDIA_HOSTS.tiktok, request, server).href;
 
     try {
       // Using TikTok API alternative

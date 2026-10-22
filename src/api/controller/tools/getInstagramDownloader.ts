@@ -1,21 +1,21 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
 import logger from "@/libs/lokiLogger";
+import { guardMediaRequest, MEDIA_HOSTS } from "@/utils/mediaUrl";
 
 /**
  * Right now Instagram downloader is not working
  */
 export default createElysia()
-  .get("/instagram/downloader", async ({ query, set }: any) => {
-    const { url } = query;
-
-    if (!url) {
+  .get("/instagram/downloader", async ({ query, set, request, server }: any) => {
+    if (!query.url) {
       set.status = 400;
       return {
         success: false,
         error: "URL parameter is required",
       };
     }
+    const url = guardMediaRequest(query.url, MEDIA_HOSTS.instagram, request, server).href;
 
     const services = [
       {
