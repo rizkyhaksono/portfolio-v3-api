@@ -66,13 +66,15 @@ mock.module("@/libs/lokiLogger", () => ({ default: { info() {}, warn() {}, error
 
 const { error } = await import("@/utils/errorHandler");
 const { getUser, updateUser } = await import("@/api/controller/user");
-const { default: avatarRedirect } = await import("@/api/controller/asset/avatarRedirect");
+const { minioUpload, minioDownload, avatarRedirect } = await import("@/api/controller/asset");
 const { stableAvatarUrl } = await import("@/utils/userProfile");
+const { attachmentDisposition } = await import("@/utils/minioUtils");
 
+// Same composition as src/api/index.ts: the public avatar route shares a group with guarded ones.
 const app = new Elysia()
   .use(error)
   .group("/me", (api) => api.use(getUser).use(updateUser))
-  .group("/asset", (api) => api.use(avatarRedirect));
+  .group("/asset", (api) => api.use(minioUpload).use(minioDownload).use(avatarRedirect));
 
 const originalBaseUrl = process.env.BASE_URL;
 beforeAll(() => {
@@ -130,5 +132,29 @@ describe("GET /asset/avatar/:userId", () => {
   it("404s when the user has no avatar or does not exist", async () => {
     expect((await get("bare")).status).toBe(404);
     expect((await get("missing")).status).toBe(404);
+  });
+});
+
+describe("MinIO downloads", () => {
+  it("refuse signed-in non-admins", async () => {
+    for (const path of ["/asset/minio/download", "/asset/minio/download/public"]) {
+      const res = await app.handle(
+        new Request(`http://localhost${path}`, {
+          method: "POST",
+          headers: { ...auth, "content-type": "application/json" },
+          body: JSON.stringify({ filename: "avatars/u1/abc.png" }),
+        })
+      );
+      expect(res.status).toBe(403);
+    }
+  });
+
+  it("build a Content-Disposition that cannot inject headers", () => {
+    const header = attachmentDisposition('a/b"c\r\nSet-Cookie: x=1;\\é.png');
+    expect(header).not.toMatch(/[\r\n]/);
+    expect(header).toBe(
+      `attachment; filename="abcSet-Cookie: x=1;_.png"; filename*=UTF-8''abcSet-Cookie%3A%20x%3D1%3B%C3%A9.png`
+    );
+    expect(attachmentDisposition("x".repeat(300))).toContain(`filename="${"x".repeat(120)}"`);
   });
 });
