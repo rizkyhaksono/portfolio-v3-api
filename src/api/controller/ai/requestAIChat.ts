@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import type { Content } from "@google/generative-ai";
 import {
+  BadGatewayException,
   InternalServerErrorException,
   NotFoundException,
   TooManyRequestsException,
@@ -11,7 +12,7 @@ import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
 import { checkAiRateLimit, checkUserDailyBudget, refundUserDailyBudget } from "@/libs/aiRateLimit";
 import { retrievePortfolioContext } from "@/libs/rag";
-import { runWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL, GENERATION_CONFIG, toFriendlyAiError } from "@/libs/geminiChat";
+import { streamWithTools, SYSTEM_INSTRUCTION, GEMINI_MODEL, GENERATION_CONFIG, toFriendlyAiError } from "@/libs/geminiChat";
 import logger from "@/libs/lokiLogger";
 
 const MAX_HISTORY = 20;
@@ -73,7 +74,8 @@ export default createElysia()
         data: { msg: text, role: "user", aIChatId: chatRecord.id },
       });
 
-      let fullResponse: string;
+      let reply: AsyncGenerator<string, void>;
+      let firstChunk: string;
       try {
         // History (most-recent MAX_HISTORY, restored to chronological order) and RAG
         // context are independent — fetch them concurrently. Ordering asc instead of
@@ -112,17 +114,11 @@ export default createElysia()
           { role: "user", parts: [{ text: augmentedText }] },
         ];
 
-        // runWithTools throws on an empty/cut-off reply, so an empty reply is never saved.
-        ({ text: fullResponse } = await runWithTools(model, contents));
-
-        // Save before streaming so a client abort mid-stream still leaves a complete turn.
-        await prismaClient.aIChatMessage.create({
-          data: {
-            msg: fullResponse,
-            role: "model",
-            aIChatId: chatRecord.id,
-          },
-        });
+        // Pull the first chunk here so tool-round and Gemini errors still reach onError.
+        reply = streamWithTools(model, contents);
+        const first = await reply.next();
+        if (first.done) throw new BadGatewayException("The reply was cut off. Please try a shorter question.");
+        firstChunk = first.value;
       } catch (err) {
         refundUserDailyBudget(user.id, err);
         // Roll back this turn so a failure leaves no orphan user message or empty new chat.
@@ -133,19 +129,44 @@ export default createElysia()
         throw toFriendlyAiError(err);
       }
 
-      // Stream in small chunks so the client renders a visible, ChatGPT-like
-      // typing effect (a smaller chunk + slight delay reads as natural typing).
+      const saveReply = (msg: string) =>
+        prismaClient.aIChatMessage
+          .create({ data: { msg, role: "model", aIChatId: chatRecord.id } })
+          .catch((err: unknown) => logger.error({ err }, "AI chat reply save failed"));
+      // Manual next() calls (not for-await) so leaving this loop never closes `reply`.
+      const readRest = async function* () {
+        for (let next = await reply.next(); !next.done; next = await reply.next()) yield next.value;
+      };
+
       // Returned (not a generator handler) because Elysia skips onError for errors a
       // generator throws before its first yield, turning every 404/429/502 into a 500.
       return (async function* () {
-        const chunkSize = 4;
-        for (let i = 0; i < fullResponse.length; i += chunkSize) {
-          const piece = fullResponse.slice(i, i + chunkSize);
-          yield piece;
-          await new Promise((r) => setTimeout(r, 12));
+        let fullResponse = firstChunk;
+        let saved = false;
+        try {
+          yield firstChunk;
+          try {
+            for await (const piece of readRest()) {
+              fullResponse += piece;
+              yield piece;
+            }
+          } catch (err) {
+            logger.error({ err }, "AI chat stream failed mid-reply; saving the partial reply");
+          }
+          saved = true;
+          await saveReply(fullResponse);
+          yield `\n<!--chatId:${chatRecord.id}-->`;
+        } finally {
+          // The client disconnected mid-reply: finish reading so the saved turn is complete.
+          if (!saved) {
+            try {
+              for await (const piece of readRest()) fullResponse += piece;
+            } catch {
+              // keep what arrived
+            }
+            await saveReply(fullResponse);
+          }
         }
-
-        yield `\n<!--chatId:${chatRecord.id}-->`;
       })();
     },
     {
