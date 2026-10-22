@@ -71,7 +71,8 @@ import {
 import { getSettings, updateSettings } from "./controller/settings";
 import {
   minioUpload,
-  minioDownload
+  minioDownload,
+  avatarRedirect
 } from "./controller/asset";
 import {
   getYoutubeDownloader,
@@ -189,6 +190,7 @@ const apiRoutes = createElysia({ prefix: "/v3" })
     api
       .use(minioUpload)
       .use(minioDownload)
+      .use(avatarRedirect)
   )
   .group("/tools", (api) =>
     api

@@ -68,6 +68,7 @@ export default createElysia()
           passwordSalt,
           name,
         },
+        select: { id: true, email: true, name: true, role: true, createdAt: true, updatedAt: true },
       });
       const session = await lucia.createSession(userId, {});
       const sessionCookie = lucia.createSessionCookie(session.id);

@@ -2,6 +2,7 @@ import { createElysia } from "@/libs/elysia";
 import { authGuard } from "@/libs/authGuard";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { countTasks, topOrder, createTask } from "@/libs/trackerStore";
+import { withAvatarUrl } from "@/utils/userProfile";
 import { t } from "elysia";
 
 const COLUMNS = ["todo", "in_progress", "in_qa", "done"];
@@ -23,7 +24,7 @@ export default createElysia()
       const [me, count, top] = await Promise.all([
         prismaClient.user.findUnique({
           where: { id: user.id },
-          select: { name: true, avatarUrl: true, iconUrl: true },
+          select: { id: true, name: true, avatarUrl: true, avatarMinioKey: true, iconUrl: true },
         }),
         countTasks(),
         topOrder(status),
@@ -42,7 +43,7 @@ export default createElysia()
         order,
         createdById: user.id,
         createdByName: me?.name ?? null,
-        createdByAvatar: me?.avatarUrl ?? me?.iconUrl ?? null,
+        createdByAvatar: (me && withAvatarUrl(me).avatarUrl) ?? me?.iconUrl ?? null,
       });
 
       return { status: 200, message: "Success", data: task };

@@ -6,6 +6,7 @@ import { NotFoundException, ForbiddenException } from "@/constants/exceptions";
 import { t } from "elysia";
 import logger from "@/libs/lokiLogger";
 import { authGuard } from "@/libs/authGuard";
+import { withAvatarUrl } from "@/utils/userProfile";
 
 export default createElysia()
   .use(publicChatModel)
@@ -35,6 +36,7 @@ export default createElysia()
               id: true,
               name: true,
               avatarUrl: true,
+              avatarMinioKey: true,
               headline: true,
             },
           },
@@ -49,6 +51,7 @@ export default createElysia()
                   id: true,
                   name: true,
                   avatarUrl: true,
+                  avatarMinioKey: true,
                   headline: true,
                 },
               },
@@ -66,7 +69,11 @@ export default createElysia()
       return {
         status: 200,
         message: "Message updated successfully",
-        data: updatedPost,
+        data: {
+          ...updatedPost,
+          user: withAvatarUrl(updatedPost.user),
+          replyTo: updatedPost.replyTo && { ...updatedPost.replyTo, user: withAvatarUrl(updatedPost.replyTo.user) },
+        },
       };
     },
     {

@@ -1,7 +1,7 @@
 import { createElysia } from "@/libs/elysia";
 import { authGuard } from "@/libs/authGuard";
 import { prismaClient } from "@/libs/prismaDatabase";
-import { getTask, updateTask } from "@/libs/trackerStore";
+import { getTask, updateTask, withCreatorAvatars } from "@/libs/trackerStore";
 import { t } from "elysia";
 
 const COLUMNS = ["todo", "in_progress", "in_qa", "done"];
@@ -46,7 +46,7 @@ export default createElysia()
       if (body.order !== undefined) fields.order = body.order;
 
       const task = await updateTask(id, fields);
-      return { status: 200, message: "Success", data: task };
+      return { status: 200, message: "Success", data: task && (await withCreatorAvatars([task]))[0] };
     },
     {
       params: t.Object({ id: t.String() }),

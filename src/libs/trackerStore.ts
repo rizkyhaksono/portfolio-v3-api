@@ -1,4 +1,5 @@
 import { prismaClient } from "@/libs/prismaDatabase";
+import { withAvatarUrl } from "@/utils/userProfile";
 
 /**
  * Raw-SQL store for the Kanban tracker. Deliberately avoids a Prisma model so it
@@ -71,6 +72,22 @@ export async function listTasks(): Promise<TrackerTask[]> {
     `SELECT * FROM "TrackerTask" ORDER BY "status" ASC, "order" ASC`
   );
   return rows.map(rowToTask);
+}
+
+/** Older cards stored an expiring presigned avatar; serve each creator's current, stable one. */
+export async function withCreatorAvatars(tasks: TrackerTask[]): Promise<TrackerTask[]> {
+  const ids = [...new Set(tasks.map((task) => task.createdById).filter((id): id is string => !!id))];
+  if (ids.length === 0) return tasks;
+  const users = await prismaClient.user.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, avatarUrl: true, avatarMinioKey: true, iconUrl: true },
+  });
+  const avatars = new Map(users.map((u) => [u.id, withAvatarUrl(u).avatarUrl ?? u.iconUrl]));
+  return tasks.map((task) =>
+    task.createdById && avatars.has(task.createdById)
+      ? { ...task, createdByAvatar: avatars.get(task.createdById) ?? null }
+      : task
+  );
 }
 
 export async function countTasks(): Promise<number> {

@@ -5,6 +5,7 @@ import { prismaClient } from "@/libs/prismaDatabase";
 import { ForbiddenException, NotFoundException } from "@/constants/exceptions";
 import logger from "@/libs/lokiLogger";
 import { authGuard } from "@/libs/authGuard";
+import { withAvatarUrl } from "@/utils/userProfile";
 
 export default createElysia()
   .use(publicChatModel)
@@ -71,6 +72,7 @@ export default createElysia()
               id: true,
               name: true,
               avatarUrl: true,
+              avatarMinioKey: true,
               headline: true,
             },
           },
@@ -85,6 +87,7 @@ export default createElysia()
                   id: true,
                   name: true,
                   avatarUrl: true,
+                  avatarMinioKey: true,
                   headline: true,
                 },
               },
@@ -103,7 +106,11 @@ export default createElysia()
       return {
         status: 201,
         message: "Message created successfully",
-        data: post,
+        data: {
+          ...post,
+          user: withAvatarUrl(post.user),
+          replyTo: post.replyTo && { ...post.replyTo, user: withAvatarUrl(post.replyTo.user) },
+        },
       };
     },
     {

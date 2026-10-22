@@ -1,11 +1,11 @@
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
-import { getMinioPublicLink } from "@/utils/minioUtils";
+import { toProfile } from "@/utils/userProfile";
 
 /**
  * Public owner profile — the single portfolio owner (the ADMIN-role user). Powers the public
  * left sidebar + home intro so editing the admin Profile settings updates the live site.
- * Avatar/banner URLs are regenerated from MinIO keys (mirrors getUser) so they never expire.
+ * Avatar/banner URLs are derived from MinIO keys (mirrors getUser) so they never expire.
  */
 export default createElysia().get(
   "/",
@@ -29,14 +29,7 @@ export default createElysia().get(
 
     if (!owner) return { status: 200, message: "Success", data: null };
 
-    let avatarUrl = owner.avatarUrl ?? owner.iconUrl ?? null;
-    let bannerUrl = owner.bannerUrl ?? null;
-    if (owner.avatarMinioKey) {
-      try { avatarUrl = await getMinioPublicLink(owner.avatarMinioKey); } catch { /* keep stored value */ }
-    }
-    if (owner.bannerMinioKey) {
-      try { bannerUrl = await getMinioPublicLink(owner.bannerMinioKey); } catch { /* keep stored value */ }
-    }
+    const { avatarUrl, bannerUrl } = await toProfile({ ...owner, avatarUrl: owner.avatarUrl ?? owner.iconUrl });
 
     const settings = await prismaClient.adminSettings
       .findUnique({ where: { userId: owner.id }, select: { website: true } })

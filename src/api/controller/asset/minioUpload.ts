@@ -2,7 +2,7 @@ import ShortUniqueId from "short-unique-id";
 import MinioClient from "@/libs/minioClient";
 import { authGuard } from "@/libs/authGuard";
 import { createElysia } from "@/libs/elysia";
-import { getMinioPublicLink, isMetaDataImg } from "@/utils/minioUtils";
+import { detectImageType, getMinioPublicLink, PRESIGN_MAX_SECONDS } from "@/utils/minioUtils";
 import { minioModel } from "@/models/minio.model";
 
 export default createElysia()
@@ -21,7 +21,7 @@ export default createElysia()
         const fileBuffer = await body.file.arrayBuffer();
         const { randomUUID } = new ShortUniqueId({ length: 20 });
 
-        if (!(await isMetaDataImg(fileBuffer))) {
+        if (!(await detectImageType(fileBuffer, ["image/png", "image/jpeg", "image/gif", "image/bmp", "image/webp"]))) {
           return {
             data: null,
             message: "Uploaded file is not a valid image",
@@ -45,7 +45,7 @@ export default createElysia()
         return {
           data: {
             fileName,
-            publicLink: await getMinioPublicLink(fileName),
+            publicLink: await getMinioPublicLink(fileName, PRESIGN_MAX_SECONDS),
             bucket: Bun.env.MINIO_BUCKET_NAME!,
             fileSize: body.file.size,
             metadata,

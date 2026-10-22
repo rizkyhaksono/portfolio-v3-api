@@ -4,6 +4,7 @@ import { authGuard } from "@/libs/authGuard";
 import userModel from "@/models/user.model";
 import { BadRequestException, ForbiddenException } from "@/constants/exceptions";
 import { userGuard } from "@/libs/roleGuards";
+import { PROFILE_SELECT, toProfile } from "@/utils/userProfile";
 
 export default createElysia()
   .use(userModel)
@@ -23,7 +24,8 @@ export default createElysia()
     // This prevents IDOR (a caller can never edit another user) and avoids a silent
     // no-op when the client sends a stale/mismatched id.
     const userInfo = await prismaClient.user.findUnique({
-      where: { id: user.id }
+      where: { id: user.id },
+      select: { email: true },
     });
 
     if (!userInfo) {
@@ -45,10 +47,12 @@ export default createElysia()
     }
 
     try {
-      return await prismaClient.user.update({
+      const updated = await prismaClient.user.update({
         where: { id: user.id },
         data,
+        select: PROFILE_SELECT,
       });
+      return await toProfile(updated);
     } catch (err) {
       if (err && typeof err === "object" && (err as { code?: string }).code === "P2002") {
         set.status = 409;

@@ -1,11 +1,11 @@
 import { createElysia } from "@/libs/elysia";
-import { listTasks } from "@/libs/trackerStore";
+import { listTasks, withCreatorAvatars } from "@/libs/trackerStore";
 
 /** Public: anyone can view the board (no auth). */
 export default createElysia().get(
   "/",
   async () => {
-    const data = await listTasks();
+    const data = await withCreatorAvatars(await listTasks());
     return { status: 200, message: "Success", data };
   },
   {
