@@ -2,7 +2,8 @@ import ShortUniqueId from "short-unique-id";
 import MinioClient from "@/libs/minioClient";
 import { authGuard } from "@/libs/authGuard";
 import { createElysia } from "@/libs/elysia";
-import { detectImageType, getMinioPublicLink, PRESIGN_MAX_SECONDS } from "@/utils/minioUtils";
+import { getMinioPublicLink, PRESIGN_MAX_SECONDS } from "@/utils/minioUtils";
+import { detectImageType } from "@/utils/imageType";
 import { minioModel } from "@/models/minio.model";
 
 export default createElysia()

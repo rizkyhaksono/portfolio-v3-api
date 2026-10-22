@@ -4,7 +4,7 @@ import logger from "@/libs/lokiLogger";
 import MinioClient from "@/libs/minioClient";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { userGuard } from "@/libs/roleGuards";
-import { detectImageType } from "@/utils/minioUtils";
+import { detectImageType } from "@/utils/imageType";
 import { stableAvatarUrl } from "@/utils/userProfile";
 import { t } from "elysia";
 import ShortUniqueId from "short-unique-id";

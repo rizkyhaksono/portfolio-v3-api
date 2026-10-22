@@ -5,7 +5,7 @@ import { checkPublicAiRateLimit, checkPublicDailyBudget, refundPublicDailyBudget
 import { GEMINI_MODEL, GENERATION_CONFIG, finishedText } from "@/libs/geminiChat";
 import logger from "@/libs/lokiLogger";
 import { getClientIp } from "@/utils/clientIp";
-import { detectImageType } from "@/utils/minioUtils";
+import { detectImageType } from "@/utils/imageType";
 
 const ALLOWED_MIME = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB decoded
