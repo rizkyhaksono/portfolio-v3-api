@@ -5,6 +5,7 @@ import { BadRequestException, UnauthorizedException } from "@/constants/exceptio
 import logger from "@/libs/lokiLogger";
 import { lucia } from "@/libs/luciaAuth";
 import { createHandoffCode } from "@/libs/oauthHandoff";
+import { frontendUrl } from "@/utils/urls";
 import { t } from "elysia";
 
 interface GoogleUserInfo {
@@ -207,8 +208,7 @@ export default createElysia().get(
       });
 
       // The frontend server trades this one-time code for the session via POST /auth/oauth/exchange.
-      const frontendUrl = Bun.env.FRONTEND_URL || "http://localhost:3000";
-      const callbackUrl = `${frontendUrl}/auth/callback?code=${createHandoffCode(sessionCookie.value)}`;
+      const callbackUrl = `${frontendUrl()}/auth/callback?code=${createHandoffCode(sessionCookie.value)}`;
       set.status = 302;
 
       return new Response(null, {

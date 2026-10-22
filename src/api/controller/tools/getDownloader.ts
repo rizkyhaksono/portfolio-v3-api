@@ -10,7 +10,7 @@ import { ANY_MEDIA_HOST, guardMediaRequest } from "@/utils/mediaUrl";
  * Self-host: https://github.com/imputnet/cobalt (see docker-compose.cobalt.yml).
  * Configure with COBALT_API_URL (the instance root, which accepts `POST /`).
  */
-const COBALT_API_URL = process.env.COBALT_API_URL ?? "https://dl.natee.my.id";
+const COBALT_API_URL = process.env.COBALT_API_URL || "https://dl.natee.my.id";
 
 interface DownloadLink {
   quality: string;

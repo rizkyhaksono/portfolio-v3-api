@@ -86,8 +86,9 @@ function dailyCounter(limit: number) {
 
 // Gemini's free-tier daily quota (RPD) is shared by one API key, so abuse of the public
 // endpoints could exhaust the owner's own allowance. This caps total public calls/day.
-const publicDaily = dailyCounter(Number(process.env.AI_PUBLIC_DAILY_BUDGET ?? 80));
-const userDaily = dailyCounter(Number(process.env.AI_USER_DAILY_BUDGET ?? 40));
+// `||`: compose passes unset values as "", which must not become a budget of 0.
+const publicDaily = dailyCounter(Number(process.env.AI_PUBLIC_DAILY_BUDGET || 80));
+const userDaily = dailyCounter(Number(process.env.AI_USER_DAILY_BUDGET || 40));
 
 /**
  * Only calls Gemini rejected unserved (429/5xx) are refunded, so outages don't drain the day.

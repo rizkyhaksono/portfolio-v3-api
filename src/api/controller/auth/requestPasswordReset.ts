@@ -7,6 +7,7 @@ import { sha256 } from "@oslojs/crypto/sha2";
 import { encodeHexLowerCase } from "@oslojs/encoding";
 import { checkAuthRateLimit } from "@/libs/aiRateLimit";
 import { getClientIp } from "@/utils/clientIp";
+import { frontendUrl } from "@/utils/urls";
 
 export default createElysia().post(
   "/password-reset/request",
@@ -44,8 +45,7 @@ export default createElysia().post(
       },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL ?? "http://localhost:3000";
-    const resetUrl = `${frontendUrl}/auth/reset-password?token=${tokenId}`;
+    const resetUrl = `${frontendUrl()}/auth/reset-password?token=${tokenId}`;
 
     return {
       status: 200,

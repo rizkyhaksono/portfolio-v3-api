@@ -28,8 +28,14 @@ services:
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.6-flash}
       GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-001}
       AI_PUBLIC_DAILY_BUDGET: ${AI_PUBLIC_DAILY_BUDGET:-80}
+      AI_USER_DAILY_BUDGET: ${AI_USER_DAILY_BUDGET:-40}
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      INTERNAL_PROXY_SECRET: ${INTERNAL_PROXY_SECRET:-}
+      API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
+      IP_HASH_SALT: ${IP_HASH_SALT:-}
+      COBALT_API_URL: ${COBALT_API_URL:-}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
     ports:
       - target: 3121
         published: 3121
@@ -69,6 +75,8 @@ services:
       NODE_ENV: production
       DOMAIN: ${WEB_DOMAIN:-}
       API_URL: ${WEB_API_URL:-http://api:3121}
+      # Same value as the api service: sent as x-internal-key on server-to-server calls.
+      INTERNAL_PROXY_SECRET: ${INTERNAL_PROXY_SECRET:-}
       SUPABASE_SERVICE_ROLE_KEY: ${WEB_SUPABASE_SERVICE_ROLE_KEY:-}
       GH_READ_USER_TOKEN_PERSONAL: ${WEB_GH_READ_USER_TOKEN_PERSONAL:-}
       DEVTO_KEY: ${WEB_DEVTO_KEY:-}

@@ -68,7 +68,7 @@ All list endpoints support cursor-based pagination:
     servers: [
       {
         url: process.env.NODE_ENV === "development"
-          ? `http://localhost:${process.env.PORT ?? 3031}`
+          ? `http://localhost:${process.env.PORT ?? 3121}`
           : "https://api.natee.my.id",
         description: process.env.NODE_ENV === "development" ? "Development server" : "Production server"
       },
