@@ -16,7 +16,6 @@ COPY tsconfig.json ./
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
 
 RUN bun install --frozen-lockfile \
-  && bun add dotenv pino-pretty \
   && bunx prisma generate
 
 COPY src ./src
