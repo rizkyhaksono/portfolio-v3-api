@@ -80,9 +80,7 @@ export default createElysia()
       params: t.Object({
         id: t.String(),
       }),
-      body: t.Object({
-        message: t.String(),
-      }),
+      body: "publicChat.update",
       response: {
         200: t.Object({
           status: t.Number(),

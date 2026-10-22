@@ -5,6 +5,7 @@ import { checkPublicAiRateLimit, checkPublicDailyBudget, refundPublicDailyBudget
 import { GEMINI_MODEL, GENERATION_CONFIG, finishedText } from "@/libs/geminiChat";
 import logger from "@/libs/lokiLogger";
 import { getClientIp } from "@/utils/clientIp";
+import { detectImageType } from "@/utils/minioUtils";
 
 const ALLOWED_MIME = ["image/png", "image/jpeg", "image/webp"];
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB decoded
@@ -39,13 +40,18 @@ export default createElysia().post(
     }
 
     // Accept either a raw base64 string or a full data URI.
-    const base64 = body.imageBase64.includes(",")
-      ? body.imageBase64.slice(body.imageBase64.indexOf(",") + 1)
-      : body.imageBase64;
-    const approxBytes = Math.floor((base64.length * 3) / 4);
-    if (approxBytes > MAX_BYTES) {
+    const bytes = Buffer.from(
+      body.imageBase64.includes(",") ? body.imageBase64.slice(body.imageBase64.indexOf(",") + 1) : body.imageBase64,
+      "base64"
+    );
+    if (bytes.byteLength > MAX_BYTES) {
       set.status = 413;
       return { status: 413, message: "Image too large (max 2MB)", data: null };
+    }
+    const detected = await detectImageType(bytes, ALLOWED_MIME);
+    if (!detected || detected.mime !== body.mimeType) {
+      set.status = 400;
+      return { status: 400, message: "The file is not the image type it claims to be", data: null };
     }
 
     const ip = getClientIp(request, server);
@@ -77,7 +83,7 @@ export default createElysia().post(
     let raw: string;
     try {
       const result = await model.generateContent([
-        { inlineData: { data: base64, mimeType: body.mimeType } },
+        { inlineData: { data: bytes.toString("base64"), mimeType: detected.mime } },
         { text: prompt },
       ]);
       // Throws on a cut-off/blocked/empty reply instead of returning 200 with nothing parsed.
