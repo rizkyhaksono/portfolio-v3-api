@@ -67,6 +67,7 @@ import {
   deleteBanner,
   getAvatar,
   getBanner,
+  getUserCount,
 } from "./controller/user";
 import { getSettings, updateSettings } from "./controller/settings";
 import {
@@ -186,6 +187,7 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(getAvatar)
       .use(getBanner)
   )
+  .group("/user", (api) => api.use(getUserCount))
   .group("/asset", (api) =>
     api
       .use(minioUpload)

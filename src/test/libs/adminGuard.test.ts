@@ -7,7 +7,7 @@ const create = mock(async ({ data }: { data: Record<string, unknown> }) => ({ id
 const remove = mock(async () => ({ id: "post-1" }));
 
 mock.module("@/libs/prismaDatabase", () => ({
-  prismaClient: { blogPost: { create, delete: remove } },
+  prismaClient: { blogPost: { create, delete: remove }, user: { count: async () => 42 } },
 }));
 mock.module("@/libs/luciaAuth", () => ({
   lucia: {
@@ -66,5 +66,19 @@ describe("adminGuard on admin writes", () => {
     const res = await postBlog();
     expect(res.status).toBe(401);
     expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /v3/user/count", () => {
+  const count = () =>
+    apiRoutes.handle(new Request("http://localhost/v3/user/count", { headers: { authorization: "Bearer s" } }));
+
+  it("is admin only and returns the total", async () => {
+    role = "USER";
+    expect((await count()).status).toBe(403);
+    role = "ADMIN";
+    const res = await count();
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ status: 200, data: { total: 42 } });
   });
 });
