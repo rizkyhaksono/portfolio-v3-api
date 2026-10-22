@@ -162,7 +162,8 @@ createElysia()
 
 ## Testing
 
-Tests use **Bun's native test runner** (`bun:test`). They are **integration tests** — they require the server to be running on `Bun.env.PORT`.
+Tests use **Bun's native test runner** (`bun:test`). Most are **integration tests** — they require the server to be running on `Bun.env.PORT`.
+The DB-free suites in `src/test/libs` and `src/test/constants` fake Prisma/Lucia/MinIO with `mock.module` and run real handlers via `app.handle()`; CI runs only those (`bun test src/test/libs src/test/constants`).
 
 ```bash
 bun dev      # start server in one terminal
