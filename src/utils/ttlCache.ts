@@ -4,6 +4,7 @@
  */
 export class TtlCache<V> {
   private readonly entries = new Map<string, { value: V; expiresAt: number }>();
+  private readonly pending = new Map<string, Promise<V>>();
 
   constructor(private readonly ttlMs: number, private readonly maxSize = 500) {}
 
@@ -27,12 +28,20 @@ export class TtlCache<V> {
     this.entries.clear();
   }
 
-  /** Cached value, or the result of `load` (cached only when it resolves). */
+  /** Cached value, or the result of `load`, shared by concurrent callers and cached only when it resolves. */
   async getOrLoad(key: string, load: () => Promise<V>): Promise<V> {
     const hit = this.get(key);
     if (hit !== undefined) return hit;
-    const value = await load();
-    this.set(key, value);
-    return value;
+    let loading = this.pending.get(key);
+    if (!loading) {
+      loading = load()
+        .then((value) => {
+          this.set(key, value);
+          return value;
+        })
+        .finally(() => this.pending.delete(key));
+      this.pending.set(key, loading);
+    }
+    return loading;
   }
 }
