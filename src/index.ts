@@ -3,7 +3,6 @@ import cors from "@elysiajs/cors";
 import apiRoutes from "./api";
 import { docs } from "./libs/swagger";
 import { instrumentation } from "./libs/instrumentation";
-import { lookupIP } from "./utils/ipGeoLookup";
 import { getAllowedOrigins } from "./constants/corsOrigins";
 
 // AI chat runs a multi-round tool loop before its first byte; Elysia's default 30s idle cut drops it.
@@ -23,50 +22,11 @@ const api = baseElysia({ serve: { idleTimeout: 120 } })
       description: "Endpoint for accessing API documentation.",
     }
   })
-  .get("/ping", async ({
-    request,
-    headers,
-    server,
-  }: {
-    request: Request;
-    headers: Record<string, string>;
-    server: any;
-  }) => {
-    // Priority: Cloudflare → X-Forwarded-For (first hop) → X-Real-IP → socket IP
-    const ip =
-      headers['cf-connecting-ip'] ??
-      headers['x-forwarded-for']?.split(',')[0].trim() ??
-      headers['x-real-ip'] ??
-      server?.requestIP(request)?.address ??
-      'Unknown';
-
-    const userAgent = headers['user-agent'] ?? 'Unknown';
-    const host = headers['host'] ?? 'Unknown';
-    const referer = headers['referer'] ?? 'Direct access';
-    const acceptLanguage = headers['accept-language'] ?? 'Unknown';
-
-    const geo = await lookupIP(ip);
-
-    return {
-      status: 200,
-      message: "pong 🏓",
-      timestamp: new Date().toISOString(),
-      user_info: {
-        ip_address: ip,
-        user_agent: userAgent,
-        host: host,
-        referer: referer,
-        language: acceptLanguage,
-        method: request.method,
-        url: request.url,
-        geolocation: geo,
-      }
-    };
-  }, {
+  .get("/ping", () => ({ status: "ok" }), {
     detail: {
       tags: ["General"],
       summary: "Ping endpoint",
-      description: "Ping endpoint for health checks and testing connectivity.",
+      description: "Liveness probe for the container healthcheck.",
     }
   })
   .listen(process.env.PORT ?? 3031);
