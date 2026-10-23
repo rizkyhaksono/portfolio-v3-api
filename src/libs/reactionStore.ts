@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
 import { prismaClient } from "@/libs/prismaDatabase";
+import { hashClientIp } from "@/utils/ipHash";
 
 /**
  * Raw-SQL store for anonymous claps on blog posts & projects. Uses the same lazy
@@ -10,10 +10,8 @@ import { prismaClient } from "@/libs/prismaDatabase";
 export type ReactionTarget = "blog" | "project";
 export const REACTION_TARGETS: ReactionTarget[] = ["blog", "project"];
 
-const SALT = process.env.IP_HASH_SALT ?? "portfolio-v3-reactions";
-
 export function hashIp(ip: string): string {
-  return createHash("sha256").update(`${ip}:${SALT}`).digest("hex");
+  return hashClientIp(ip, "portfolio-v3-reactions");
 }
 
 let ensured = false;

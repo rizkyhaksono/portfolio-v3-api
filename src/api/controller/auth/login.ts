@@ -40,7 +40,7 @@ export default createElysia()
     // Generic message for both branches — avoids user enumeration (don't reveal
     // whether the email exists vs the password was wrong).
     if (!user?.passwordSalt || !user?.hashedPassword) {
-      lokiLogger.error({ message: "Login failed: user not found", email });
+      lokiLogger.error({ message: "Login failed: user not found or has no password", userId: user?.id });
       throw new BadRequestException("Invalid email or password.");
     }
 
@@ -57,7 +57,7 @@ export default createElysia()
         user.hashedPassword
       ))
     ) {
-      lokiLogger.error({ message: "Login failed: invalid password", email });
+      lokiLogger.error({ message: "Login failed: invalid password", userId: user.id });
       throw new BadRequestException("Invalid email or password.");
     }
 

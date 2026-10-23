@@ -36,7 +36,7 @@ export async function checkEmailConflict(
   if (existingOAuthAccount) {
     logger.warn({
       message: "Email conflict detected",
-      email,
+      userId: user.id,
       currentProvider,
       existingProvider: existingOAuthAccount.provider,
     });

@@ -4,7 +4,8 @@ import logger from "@/libs/lokiLogger";
 import MinioClient from "@/libs/minioClient";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { userGuard } from "@/libs/roleGuards";
-import { isMetaDataImg } from "@/utils/minioUtils";
+import { detectImageType } from "@/utils/imageType";
+import { stableAvatarUrl } from "@/utils/userProfile";
 import { t } from "elysia";
 import ShortUniqueId from "short-unique-id";
 
@@ -17,18 +18,38 @@ export default createElysia()
     async ({ body: { file }, user }: any) => {
       const buffer = await file.arrayBuffer();
 
-      const isImage = await isMetaDataImg(buffer);
-      if (!isImage) throw new BadRequestException("File must be an image");
+      const type = await detectImageType(buffer);
+      if (!type) throw new BadRequestException("File must be an image");
 
       const bucketName = Bun.env.MINIO_BUCKET_NAME!;
-      const fileName = `avatars/${user!.id}_${uid.rnd()}_${file.name}`;
+      const fileName = `avatars/${user!.id}/${uid.rnd()}.${type.ext}`;
 
-      // Delete old avatar if exists
       const currentUser = await prismaClient.user.findUnique({
         where: { id: user!.id },
         select: { avatarMinioKey: true },
       });
 
+      await MinioClient.putObject(
+        bucketName,
+        fileName,
+        Buffer.from(buffer),
+        buffer.byteLength,
+        {
+          "Content-Type": type.mime,
+        }
+      );
+
+      const avatarUrl = stableAvatarUrl(user!.id, fileName);
+
+      await prismaClient.user.update({
+        where: { id: user!.id },
+        data: {
+          avatarUrl,
+          avatarMinioKey: fileName,
+        },
+      });
+
+      // Delete the old avatar only once the new one is stored and referenced.
       if (currentUser?.avatarMinioKey) {
         try {
           await MinioClient.removeObject(bucketName, currentUser.avatarMinioKey);
@@ -45,26 +66,6 @@ export default createElysia()
           });
         }
       }
-
-      await MinioClient.putObject(
-        bucketName,
-        fileName,
-        Buffer.from(buffer),
-        buffer.byteLength,
-        {
-          "Content-Type": file.type,
-        }
-      );
-
-      const avatarUrl = await MinioClient.presignedUrl("GET", bucketName, fileName, 0);
-
-      await prismaClient.user.update({
-        where: { id: user!.id },
-        data: {
-          avatarUrl,
-          avatarMinioKey: fileName,
-        },
-      });
 
       logger.info({
         message: "Avatar uploaded",

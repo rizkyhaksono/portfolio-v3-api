@@ -1,6 +1,7 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
 import { lookupIP, isValidIP } from "@/utils/ipGeoLookup";
+import { getClientIp } from "@/utils/clientIp";
 
 export default createElysia().get(
   "/ip",
@@ -13,13 +14,8 @@ export default createElysia().get(
     request: Request;
     server: any;
   }) => {
-    const ip =
-      query.address?.trim() ??
-      request.headers.get("cf-connecting-ip") ??
-      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-      request.headers.get("x-real-ip") ??
-      server?.requestIP(request)?.address ??
-      "";
+    const detected = getClientIp(request, server);
+    const ip = query.address?.trim() || (detected === "anonymous" ? "" : detected);
 
     if (!ip) {
       return { status: 400, message: "Could not determine IP address", data: null };

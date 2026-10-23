@@ -1,9 +1,28 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { getSupabaseProjects, getSupabaseCareers, getSupabaseEducations } from "@/libs/supabaseData";
+import logger from "@/libs/lokiLogger";
+import { TtlCache } from "@/utils/ttlCache";
 
 const EMBEDDING_MODEL = process.env.GEMINI_EMBEDDING_MODEL ?? "gemini-embedding-001";
 const TOP_K = 5;
+
+interface EmbeddingRow {
+  sourceType: string;
+  sourceId: string;
+  content: string;
+  embedding: unknown;
+}
+
+// The whole index is read on every chat, so keep it in memory; reindexing clears it.
+const rowsCache = new TtlCache<EmbeddingRow[]>(10 * 60 * 1000, 1);
+
+const embeddingRows = () =>
+  rowsCache.getOrLoad("rows", () =>
+    prismaClient.portfolioEmbedding.findMany({
+      select: { sourceType: true, sourceId: true, content: true, embedding: true },
+    })
+  );
 
 // Free-tier quota protection: cache embeddings by text so repeated questions and
 // re-indexing of unchanged content don't re-hit the embedding API. Simple LRU.
@@ -88,25 +107,23 @@ export async function indexPortfolioContent(): Promise<{ indexed: number }> {
     });
   }
 
-  // Wipe first so a change of embedding model can never leave mixed-dimension
-  // vectors behind (which would break cosine similarity). Rebuild from scratch.
-  await prismaClient.portfolioEmbedding.deleteMany({});
-
-  let indexed = 0;
+  // Embed everything before touching the table, so a failure part-way keeps the old index.
+  const rows: (typeof chunks[number] & { embedding: number[] })[] = [];
   for (const chunk of chunks) {
-    const embedding = await embedText(chunk.content);
-    await prismaClient.portfolioEmbedding.create({
-      data: {
-        sourceType: chunk.sourceType,
-        sourceId: chunk.sourceId,
-        content: chunk.content,
-        embedding,
-      },
-    });
-    indexed++;
+    rows.push({ ...chunk, embedding: await embedText(chunk.content) });
   }
+  // Supabase reads return [] on failure; never replace a working index with nothing.
+  if (rows.length === 0) return { indexed: 0 };
 
-  return { indexed };
+  // Replace the whole index at once so a change of embedding model can never leave
+  // mixed-dimension vectors behind (which would break cosine similarity).
+  await prismaClient.$transaction([
+    prismaClient.portfolioEmbedding.deleteMany({}),
+    prismaClient.portfolioEmbedding.createMany({ data: rows }),
+  ]);
+  rowsCache.clear();
+
+  return { indexed: rows.length };
 }
 
 export interface RetrievedSource {
@@ -121,11 +138,11 @@ export async function retrievePortfolioContextWithSources(
   const apiKey = process.env.GENERATIVE_AI_API_KEY;
   if (!apiKey) return { text: "", sources: [] };
 
-  let rows = await prismaClient.portfolioEmbedding.findMany();
+  // Indexing stays on the admin route (POST /v3/ai/reindex), never inside a visitor's request.
+  const rows = await embeddingRows();
   if (rows.length === 0) {
-    await indexPortfolioContent().catch(() => undefined);
-    rows = await prismaClient.portfolioEmbedding.findMany();
-    if (rows.length === 0) return { text: "", sources: [] };
+    logger.warn({ message: "Portfolio embedding index is empty; answering without RAG context" });
+    return { text: "", sources: [] };
   }
 
   return rankAndFormat(query, rows);
@@ -138,7 +155,7 @@ export async function retrievePortfolioContext(query: string): Promise<string> {
 
 async function rankAndFormat(
   query: string,
-  rows: { content: string; embedding: unknown; sourceType: string; sourceId: string }[]
+  rows: EmbeddingRow[]
 ): Promise<{ text: string; sources: RetrievedSource[] }> {
   const queryEmbedding = await embedText(query);
   const scored = rows

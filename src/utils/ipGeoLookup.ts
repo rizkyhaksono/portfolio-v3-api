@@ -1,3 +1,5 @@
+import { TtlCache } from "@/utils/ttlCache";
+
 const IP_API_FIELDS =
   "status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query";
 
@@ -54,12 +56,17 @@ export function isValidIP(ip: string): boolean {
   return ipv4.test(ip) || ipv6.test(ip);
 }
 
+const geoCache = new TtlCache<GeoLocation>(24 * 60 * 60 * 1000);
+
 /**
  * Lookup geolocation data for a public IP address.
  * Returns null for private/loopback IPs or on API failure.
  */
 export async function lookupIP(ip: string): Promise<GeoLocation | null> {
   if (!isValidIP(ip) || isPrivateIP(ip)) return null;
+
+  const cached = geoCache.get(ip);
+  if (cached) return cached;
 
   try {
     const res = await fetch(
@@ -72,7 +79,7 @@ export async function lookupIP(ip: string): Promise<GeoLocation | null> {
 
     if (data.status === "fail") return null;
 
-    return {
+    const geo: GeoLocation = {
       ip: data.query,
       country: data.country,
       countryCode: data.countryCode,
@@ -86,6 +93,8 @@ export async function lookupIP(ip: string): Promise<GeoLocation | null> {
       org: data.org,
       asn: data.as,
     };
+    geoCache.set(ip, geo);
+    return geo;
   } catch {
     return null;
   }

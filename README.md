@@ -148,7 +148,7 @@ The API will be available at `http://localhost:3121`
 
 ## API Documentation
 
-Interactive API documentation is available at:
+Interactive API documentation is served only when `API_DOCS_ENABLED=true`:
 
 - **Scalar UI**: `http://localhost:3121/docs` (recommended)
 - **Swagger JSON**: `http://localhost:3121/docs/json`
@@ -157,10 +157,10 @@ Interactive API documentation is available at:
 
 ### OAuth Authentication
 
-1. Initiate OAuth: `GET /v3/auth/{provider}` (google, github, discord, facebook)
+1. Initiate OAuth: `GET /v3/auth/{provider}` (only `google` is enabled)
 2. User authorizes on provider's site
-3. Callback: `GET /v3/auth/{provider}/callback`
-4. Session cookie is set automatically
+3. Callback: `GET /v3/auth/{provider}/callback` sets the API session cookie and redirects to `${FRONTEND_URL}/auth/callback?code=<one-time code>`
+4. The frontend server trades the code (single use, 60 s) for the session token at `POST /v3/auth/oauth/exchange`, sending `x-internal-key` when `INTERNAL_PROXY_SECRET` is set
 
 ### Traditional Authentication
 

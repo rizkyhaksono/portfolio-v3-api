@@ -1,5 +1,6 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
+import { TtlCache } from "@/utils/ttlCache";
 
 interface CodeforcesUser {
   handle: string;
@@ -62,6 +63,40 @@ async function fetchRecentSubmissions(
   return json.status === "OK" ? json.result : [];
 }
 
+async function fetchProfile(handle: string, count: number) {
+  const [user, submissions] = await Promise.all([
+    fetchUser(handle),
+    fetchRecentSubmissions(handle, count),
+  ]);
+
+  return {
+    handle: user.handle,
+    firstName: user.firstName ?? null,
+    lastName: user.lastName ?? null,
+    country: user.country ?? null,
+    organization: user.organization ?? null,
+    rank: user.rank,
+    rating: user.rating,
+    maxRank: user.maxRank,
+    maxRating: user.maxRating,
+    contribution: user.contribution,
+    friendOfCount: user.friendOfCount,
+    avatar: user.avatar,
+    registeredAt: new Date(user.registrationTimeSeconds * 1000).toISOString(),
+    lastOnlineAt: new Date(user.lastOnlineTimeSeconds * 1000).toISOString(),
+    recentSubmissions: submissions.map((s) => ({
+      problemName: s.problem.name,
+      problemRating: s.problem.rating ?? null,
+      tags: s.problem.tags,
+      verdict: s.verdict ?? "UNKNOWN",
+      language: s.programmingLanguage,
+      submittedAt: new Date(s.creationTimeSeconds * 1000).toISOString(),
+    })),
+  };
+}
+
+const profileCache = new TtlCache<Awaited<ReturnType<typeof fetchProfile>>>(60 * 60 * 1000);
+
 export default createElysia().get(
   "/codeforces",
   async ({
@@ -72,39 +107,8 @@ export default createElysia().get(
     const count = Math.min(parseInt(query.recentCount ?? "10"), 20);
 
     try {
-      const [user, submissions] = await Promise.all([
-        fetchUser(query.handle),
-        fetchRecentSubmissions(query.handle, count),
-      ]);
-
-      return {
-        status: 200,
-        message: "Success",
-        data: {
-          handle: user.handle,
-          firstName: user.firstName ?? null,
-          lastName: user.lastName ?? null,
-          country: user.country ?? null,
-          organization: user.organization ?? null,
-          rank: user.rank,
-          rating: user.rating,
-          maxRank: user.maxRank,
-          maxRating: user.maxRating,
-          contribution: user.contribution,
-          friendOfCount: user.friendOfCount,
-          avatar: user.avatar,
-          registeredAt: new Date(user.registrationTimeSeconds * 1000).toISOString(),
-          lastOnlineAt: new Date(user.lastOnlineTimeSeconds * 1000).toISOString(),
-          recentSubmissions: submissions.map((s) => ({
-            problemName: s.problem.name,
-            problemRating: s.problem.rating ?? null,
-            tags: s.problem.tags,
-            verdict: s.verdict ?? "UNKNOWN",
-            language: s.programmingLanguage,
-            submittedAt: new Date(s.creationTimeSeconds * 1000).toISOString(),
-          })),
-        },
-      };
+      const data = await profileCache.getOrLoad(`${query.handle}:${count}`, () => fetchProfile(query.handle, count));
+      return { status: 200, message: "Success", data };
     } catch (error: any) {
       return {
         status: 400,

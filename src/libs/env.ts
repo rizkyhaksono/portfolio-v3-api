@@ -35,6 +35,11 @@ const envValidateScheme = z.object({
   GEMINI_MODEL: z.string().optional(),
   GEMINI_EMBEDDING_MODEL: z.string().optional(),
   COBALT_API_URL: z.string().optional(),
+  INTERNAL_PROXY_SECRET: z.string().optional(),
+  API_DOCS_ENABLED: z.string().optional(),
+  AI_USER_DAILY_BUDGET: z.string().optional(),
+  IP_HASH_SALT: z.string().optional(),
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
 });
 
 const env = () => {

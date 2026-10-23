@@ -20,6 +20,9 @@
 .DS_Store
 *.pem
 
+# local probes (throwaway tests, temp binaries). Never commit.
+/.scratch/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

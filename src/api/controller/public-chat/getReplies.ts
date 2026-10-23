@@ -8,6 +8,7 @@ import {
 import { NotFoundException } from "@/constants/exceptions";
 import { t } from "elysia";
 import paginationModel from "@/models/pagination.model";
+import { withAvatarUrl } from "@/utils/userProfile";
 
 export default createElysia()
   .use(publicChatModel)
@@ -56,6 +57,7 @@ export default createElysia()
               id: true,
               name: true,
               avatarUrl: true,
+              avatarMinioKey: true,
               iconUrl: true,
               headline: true,
               role: true,
@@ -71,7 +73,7 @@ export default createElysia()
       return {
         status: 200,
         message: "Success",
-        data: replies,
+        data: replies.map(({ user, ...reply }) => ({ ...reply, user: withAvatarUrl(user) })),
         page,
         limit,
         total,

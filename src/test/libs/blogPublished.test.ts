@@ -2,11 +2,14 @@ import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 // DB-free: Prisma and Lucia are faked, the real blog handlers run via app.handle().
 const posts = [
-  { slug: "live", published: true },
-  { slug: "draft", published: false },
+  { slug: "live", published: true, content: "Live body" },
+  { slug: "draft", published: false, content: "Draft body" },
 ];
-const findMany = mock(async ({ where }: { where?: { published: boolean } }) =>
-  posts.filter((p) => !where || p.published === where.published)
+type Post = (typeof posts)[number];
+const pick = (post: Post, select?: Record<string, boolean>) =>
+  select ? Object.fromEntries(Object.keys(select).filter((k) => k in post).map((k) => [k, post[k as keyof Post]])) : post;
+const findMany = mock(async ({ where, select }: { where?: { published: boolean }; select?: Record<string, boolean> }) =>
+  posts.filter((p) => !where || p.published === where.published).map((p) => pick(p, select))
 );
 const findUnique = mock(async ({ where }: { where: { slug: string } }) =>
   posts.find((p) => p.slug === where.slug) ?? null
@@ -56,5 +59,25 @@ describe("public blog routes hide drafts", () => {
     expect((await get(getBlogBySlug, "/draft", "s")).status).toBe(404);
     role = "ADMIN";
     expect((await get(getBlogBySlug, "/draft", "s")).status).toBe(200);
+  });
+});
+
+describe("blog list payload and caching", () => {
+  beforeEach(() => {
+    role = null;
+  });
+
+  it("omits content and is publicly cacheable for anonymous callers", async () => {
+    const res = await get(getAllBlog, "/");
+    expect((await res.json()).data).toEqual([{ slug: "live", published: true }]);
+    expect(res.headers.get("cache-control")).toBe("public, max-age=60, stale-while-revalidate=600");
+    expect(res.headers.get("vary")).toContain("Authorization, Cookie");
+  });
+
+  it("returns full rows with no-store for admins", async () => {
+    role = "ADMIN";
+    const res = await get(getAllBlog, "/", "s");
+    expect((await res.json()).data[0]).toEqual({ slug: "live", published: true, content: "Live body" });
+    expect(res.headers.get("cache-control")).toBe("private, no-store");
   });
 });

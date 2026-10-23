@@ -2,6 +2,8 @@ import { createElysia } from "@/libs/elysia";
 import aiModel from "@/models/ai.model";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
+import { NotFoundException } from "@/constants/exceptions";
+import { idParams } from "@/models/params.model";
 
 export default createElysia()
   .use(aiModel)
@@ -13,16 +15,11 @@ export default createElysia()
         userId: user.id
       },
       include: {
-        messages: true
+        messages: { orderBy: { createdAt: "asc" } }
       }
     });
 
-    if (!aiChat) {
-      return {
-        status: 404,
-        message: "AI Chat not found"
-      };
-    }
+    if (!aiChat) throw new NotFoundException("AI Chat not found");
 
     return {
       status: 200,
@@ -39,6 +36,7 @@ export default createElysia()
       }
     };
   }, {
+    params: idParams,
     detail: {
       tags: ["AI"],
       summary: "Get AI Chat by ID",

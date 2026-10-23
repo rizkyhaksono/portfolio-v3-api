@@ -1,10 +1,9 @@
 import { baseElysia } from "./libs/elysia";
 import cors from "@elysiajs/cors";
 import apiRoutes from "./api";
-import { docs } from "./libs/swagger";
-import { instrumentation } from "./libs/instrumentation";
-import { lookupIP } from "./utils/ipGeoLookup";
 import { getAllowedOrigins } from "./constants/corsOrigins";
+
+const docsEnabled = process.env.API_DOCS_ENABLED === "true";
 
 // AI chat runs a multi-round tool loop before its first byte; Elysia's default 30s idle cut drops it.
 const api = baseElysia({ serve: { idleTimeout: 120 } })
@@ -12,63 +11,28 @@ const api = baseElysia({ serve: { idleTimeout: 120 } })
     origin: getAllowedOrigins(),
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
-  }))
-  .use(docs)
-  .use(apiRoutes)
-  .use(instrumentation)
-  .get("/", () => "Docs available at /docs", {
+  }));
+
+if (docsEnabled) api.use((await import("./libs/swagger")).docs);
+api.use(apiRoutes);
+// Imported lazily: building the plugin starts the OpenTelemetry SDK.
+if (process.env.OTEL_EXPORTER_OTLP_ENDPOINT) api.use((await import("./libs/instrumentation")).instrumentation);
+
+api
+  .get("/", () => (docsEnabled ? "Docs available at /docs" : "Portfolio v3 API"), {
     detail: {
       tags: ["General"],
       summary: "Docs endpoint",
       description: "Endpoint for accessing API documentation.",
     }
   })
-  .get("/ping", async ({
-    request,
-    headers,
-    server,
-  }: {
-    request: Request;
-    headers: Record<string, string>;
-    server: any;
-  }) => {
-    // Priority: Cloudflare → X-Forwarded-For (first hop) → X-Real-IP → socket IP
-    const ip =
-      headers['cf-connecting-ip'] ??
-      headers['x-forwarded-for']?.split(',')[0].trim() ??
-      headers['x-real-ip'] ??
-      server?.requestIP(request)?.address ??
-      'Unknown';
-
-    const userAgent = headers['user-agent'] ?? 'Unknown';
-    const host = headers['host'] ?? 'Unknown';
-    const referer = headers['referer'] ?? 'Direct access';
-    const acceptLanguage = headers['accept-language'] ?? 'Unknown';
-
-    const geo = await lookupIP(ip);
-
-    return {
-      status: 200,
-      message: "pong 🏓",
-      timestamp: new Date().toISOString(),
-      user_info: {
-        ip_address: ip,
-        user_agent: userAgent,
-        host: host,
-        referer: referer,
-        language: acceptLanguage,
-        method: request.method,
-        url: request.url,
-        geolocation: geo,
-      }
-    };
-  }, {
+  .get("/ping", () => ({ status: "ok" }), {
     detail: {
       tags: ["General"],
       summary: "Ping endpoint",
-      description: "Ping endpoint for health checks and testing connectivity.",
+      description: "Liveness probe for the container healthcheck.",
     }
   })
-  .listen(process.env.PORT ?? 3031);
+  .listen(process.env.PORT ?? 3121);
 
 console.log(`🦊 Elysia is running at ${process.env.NODE_ENV === "development" ? "http://" : "https://"}${api.server?.hostname}:${api.server?.port}`);

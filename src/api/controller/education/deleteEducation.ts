@@ -1,13 +1,12 @@
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
-import educationModel from "@/models/education.model";
 import { adminGuard } from "@/libs/roleGuards";
+import { idParams } from "@/models/params.model";
 
 export default createElysia()
   .use(authGuard)
   .use(adminGuard)
-  .use(educationModel)
   .delete("/:id", async ({
     params: { id }
   }: {
@@ -21,7 +20,7 @@ export default createElysia()
       data: "Education deleted successfully"
     }
   }, {
-    body: "education.model",
+    params: idParams,
     detail: {
       tags: ["Education"],
       summary: "Delete an education record",

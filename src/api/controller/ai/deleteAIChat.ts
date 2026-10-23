@@ -1,6 +1,7 @@
 import { createElysia } from "@/libs/elysia";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { authGuard } from "@/libs/authGuard";
+import { idParams } from "@/models/params.model";
 
 export default createElysia()
   .use(authGuard)
@@ -29,6 +30,7 @@ export default createElysia()
       return { status: 200, message: "Chat deleted" };
     },
     {
+      params: idParams,
       detail: {
         tags: ["AI"],
         summary: "Delete AI Chat",

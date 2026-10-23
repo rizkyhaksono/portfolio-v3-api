@@ -2,7 +2,8 @@ import { createElysia } from "@/libs/elysia";
 import { userGuard } from "@/libs/roleGuards";
 import MinioClient from "@/libs/minioClient";
 import { prismaClient } from "@/libs/prismaDatabase";
-import { isMetaDataImg } from "@/utils/minioUtils";
+import { getMinioPublicLink, PRESIGN_MAX_SECONDS } from "@/utils/minioUtils";
+import { detectImageType } from "@/utils/imageType";
 import { BadRequestException } from "@/constants/exceptions";
 import { t } from "elysia";
 import logger from "@/libs/lokiLogger";
@@ -17,18 +18,39 @@ export default createElysia()
     async ({ body: { file }, user }: any) => {
       const buffer = await file.arrayBuffer();
 
-      const isImage = await isMetaDataImg(buffer);
-      if (!isImage) throw new BadRequestException("File must be an image");
+      const type = await detectImageType(buffer);
+      if (!type) throw new BadRequestException("File must be an image");
 
       const bucketName = Bun.env.MINIO_BUCKET_NAME!;
-      const fileName = `banners/${user!.id}_${uid.rnd()}_${file.name}`;
+      const fileName = `banners/${user!.id}/${uid.rnd()}.${type.ext}`;
 
-      // Delete old banner if exists
       const currentUser = await prismaClient.user.findUnique({
         where: { id: user!.id },
         select: { bannerMinioKey: true },
       });
 
+      await MinioClient.putObject(
+        bucketName,
+        fileName,
+        Buffer.from(buffer),
+        buffer.byteLength,
+        {
+          "Content-Type": type.mime,
+        }
+      );
+
+      // Reads re-presign from the key (GET /v3/me), so this stored link is only a fallback.
+      const bannerUrl = await getMinioPublicLink(fileName, PRESIGN_MAX_SECONDS);
+
+      await prismaClient.user.update({
+        where: { id: user!.id },
+        data: {
+          bannerUrl,
+          bannerMinioKey: fileName,
+        },
+      });
+
+      // Delete the old banner only once the new one is stored and referenced.
       if (currentUser?.bannerMinioKey) {
         try {
           await MinioClient.removeObject(bucketName, currentUser.bannerMinioKey);
@@ -45,27 +67,6 @@ export default createElysia()
           });
         }
       }
-
-      // Upload new banner
-      await MinioClient.putObject(
-        bucketName,
-        fileName,
-        Buffer.from(buffer),
-        buffer.byteLength,
-        {
-          "Content-Type": file.type,
-        }
-      );
-
-      const bannerUrl = await MinioClient.presignedUrl("GET", bucketName, fileName, 0);
-
-      await prismaClient.user.update({
-        where: { id: user!.id },
-        data: {
-          bannerUrl,
-          bannerMinioKey: fileName,
-        },
-      });
 
       logger.info({
         message: "Banner uploaded",

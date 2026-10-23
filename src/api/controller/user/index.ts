@@ -6,6 +6,7 @@ import deleteAvatar from "./deleteAvatar";
 import deleteBanner from "./deleteBanner";
 import getAvatar from "./getAvatar";
 import getBanner from "./getBanner";
+import getUserCount from "./getUserCount";
 
 export {
   getUser,
@@ -15,5 +16,6 @@ export {
   deleteAvatar,
   deleteBanner,
   getAvatar,
-  getBanner
+  getBanner,
+  getUserCount
 }

@@ -1,5 +1,6 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
+import { TtlCache } from "@/utils/ttlCache";
 
 interface LeetCodeSubmitStat {
   difficulty: string;
@@ -106,11 +107,13 @@ async function getLeetCodeStats(username: string) {
   };
 }
 
+const statsCache = new TtlCache<Awaited<ReturnType<typeof getLeetCodeStats>>>(60 * 60 * 1000);
+
 export default createElysia().get(
   "/leetcode",
   async ({ query }: { query: { username: string } }) => {
     try {
-      const data = await getLeetCodeStats(query.username);
+      const data = await statsCache.getOrLoad(query.username, () => getLeetCodeStats(query.username));
       return { status: 200, message: "Success", data };
     } catch (error: any) {
       return {

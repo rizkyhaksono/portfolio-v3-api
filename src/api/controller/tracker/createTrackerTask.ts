@@ -1,7 +1,8 @@
 import { createElysia } from "@/libs/elysia";
 import { authGuard } from "@/libs/authGuard";
 import { prismaClient } from "@/libs/prismaDatabase";
-import { countTasks, topOrder, createTask } from "@/libs/trackerStore";
+import { topOrder, createTask } from "@/libs/trackerStore";
+import { withAvatarUrl } from "@/utils/userProfile";
 import { t } from "elysia";
 
 const COLUMNS = ["todo", "in_progress", "in_qa", "done"];
@@ -20,12 +21,11 @@ export default createElysia()
     }) => {
       const status = body.status && COLUMNS.includes(body.status) ? body.status : "todo";
 
-      const [me, count, top] = await Promise.all([
+      const [me, top] = await Promise.all([
         prismaClient.user.findUnique({
           where: { id: user.id },
-          select: { name: true, avatarUrl: true, iconUrl: true },
+          select: { id: true, name: true, avatarUrl: true, avatarMinioKey: true, iconUrl: true },
         }),
-        countTasks(),
         topOrder(status),
       ]);
 
@@ -33,7 +33,6 @@ export default createElysia()
       const order = top !== null ? top - 1 : 1000;
 
       const task = await createTask({
-        key: `RH-${101 + count}`,
         title: body.title.trim().slice(0, 140),
         description: body.description?.trim().slice(0, 2000) || null,
         status,
@@ -42,7 +41,7 @@ export default createElysia()
         order,
         createdById: user.id,
         createdByName: me?.name ?? null,
-        createdByAvatar: me?.avatarUrl ?? me?.iconUrl ?? null,
+        createdByAvatar: (me && withAvatarUrl(me).avatarUrl) ?? me?.iconUrl ?? null,
       });
 
       return { status: 200, message: "Success", data: task };

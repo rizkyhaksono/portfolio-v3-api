@@ -1,18 +1,18 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
 import logger from "@/libs/lokiLogger";
+import { guardMediaRequest, MEDIA_HOSTS } from "@/utils/mediaUrl";
 
 export default createElysia()
-  .get("/facebook/downloader", async ({ query, set }: any) => {
-    const { url } = query;
-
-    if (!url) {
+  .get("/facebook/downloader", async ({ query, set, request, server }: any) => {
+    if (!query.url) {
       set.status = 400;
       return {
         success: false,
         error: "URL parameter is required",
       };
     }
+    const url = guardMediaRequest(query.url, MEDIA_HOSTS.facebook, request, server).href;
 
     // Try multiple free API services in order
     const services = [

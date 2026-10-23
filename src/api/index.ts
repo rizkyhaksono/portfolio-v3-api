@@ -5,6 +5,7 @@ import {
   logout,
   provider,
   providerCallback,
+  oauthExchange,
   requestPasswordReset,
   resetPassword,
 } from "./controller/auth";
@@ -66,11 +67,13 @@ import {
   deleteBanner,
   getAvatar,
   getBanner,
+  getUserCount,
 } from "./controller/user";
 import { getSettings, updateSettings } from "./controller/settings";
 import {
   minioUpload,
-  minioDownload
+  minioDownload,
+  avatarRedirect
 } from "./controller/asset";
 import {
   getYoutubeDownloader,
@@ -107,6 +110,7 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(logout)
       .use(provider)
       .use(providerCallback)
+      .use(oauthExchange)
       .use(requestPasswordReset)
       .use(resetPassword)
   )
@@ -183,10 +187,12 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(getAvatar)
       .use(getBanner)
   )
+  .group("/user", (api) => api.use(getUserCount))
   .group("/asset", (api) =>
     api
       .use(minioUpload)
       .use(minioDownload)
+      .use(avatarRedirect)
   )
   .group("/tools", (api) =>
     api

@@ -6,6 +6,7 @@ import {
   PageBasedPaginationQuery,
 } from "@/utils/pagination";
 import paginationModel from "@/models/pagination.model";
+import { withAvatarUrl } from "@/utils/userProfile";
 
 export default createElysia()
   .use(publicChatModel)
@@ -44,6 +45,7 @@ export default createElysia()
               id: true,
               name: true,
               avatarUrl: true,
+              avatarMinioKey: true,
               iconUrl: true,
               headline: true,
               role: true,
@@ -57,13 +59,11 @@ export default createElysia()
         },
       });
 
-      const dataWithReplyCount = posts.map((post: any) => {
-        const { _count, ...rest } = post;
-        return {
-          ...rest,
-          replyCount: _count?.replies || 0,
-        };
-      });
+      const dataWithReplyCount = posts.map(({ _count, user, ...rest }) => ({
+        ...rest,
+        user: withAvatarUrl(user),
+        replyCount: _count?.replies || 0,
+      }));
 
       const totalPages = Math.ceil(total / limit);
       const prev = page > 1 ? page - 1 : null;

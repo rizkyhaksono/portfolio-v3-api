@@ -34,7 +34,6 @@ export default createElysia().post(
 
     const resetRecord = await prismaClient.passwordResetToken.findUnique({
       where: { hashedToken: tokenHash },
-      include: { user: true },
     });
 
     if (!resetRecord || resetRecord.expiresAt < new Date()) {
@@ -48,14 +47,16 @@ export default createElysia().post(
       passwordSalt + body.password + passwordPepper
     );
 
-    await prismaClient.user.update({
-      where: { id: resetRecord.userId },
-      data: { hashedPassword, passwordSalt },
-    });
-
-    await prismaClient.passwordResetToken.delete({
-      where: { userId: resetRecord.userId },
-    });
+    // One transaction, so the token can never outlive the password change it authorised.
+    await prismaClient.$transaction([
+      prismaClient.user.update({
+        where: { id: resetRecord.userId },
+        data: { hashedPassword, passwordSalt },
+      }),
+      prismaClient.passwordResetToken.delete({
+        where: { userId: resetRecord.userId },
+      }),
+    ]);
 
     return { status: 200, message: "Password updated successfully" };
   },

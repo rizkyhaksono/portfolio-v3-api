@@ -1,5 +1,6 @@
 import { createElysia } from "@/libs/elysia";
 import { t } from "elysia";
+import { ANY_MEDIA_HOST, guardMediaRequest } from "@/utils/mediaUrl";
 
 /**
  * Universal media downloader, powered by a self-hosted Cobalt instance.
@@ -9,7 +10,7 @@ import { t } from "elysia";
  * Self-host: https://github.com/imputnet/cobalt (see docker-compose.cobalt.yml).
  * Configure with COBALT_API_URL (the instance root, which accepts `POST /`).
  */
-const COBALT_API_URL = process.env.COBALT_API_URL ?? "https://dl.natee.my.id";
+const COBALT_API_URL = process.env.COBALT_API_URL || "https://dl.natee.my.id";
 
 interface DownloadLink {
   quality: string;
@@ -68,15 +69,25 @@ async function fetchFromCobalt(url: string): Promise<DownloadResult> {
 
 export default createElysia().get(
   "/download",
-  async ({ query, set }: { query: { url: string }; set: { status?: number } }) => {
-    const { url } = query;
-    if (!url?.trim()) {
+  async ({
+    query,
+    set,
+    request,
+    server,
+  }: {
+    query: { url: string };
+    set: { status?: number };
+    request: Request;
+    server: any;
+  }) => {
+    if (!query.url?.trim()) {
       set.status = 400;
       return { status: 400, message: "A media URL is required.", data: null };
     }
+    const url = guardMediaRequest(query.url, ANY_MEDIA_HOST, request, server);
 
     try {
-      const data = await fetchFromCobalt(url);
+      const data = await fetchFromCobalt(url.href);
       return { status: 200, message: "Success", data };
     } catch (err) {
       set.status = 502;

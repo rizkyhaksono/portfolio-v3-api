@@ -8,6 +8,6 @@ export const minioModel = new Elysia().model({
     }),
   }),
   "minio.download": t.Object({
-    filename: t.String({}),
+    filename: t.String({ minLength: 1, maxLength: 512 }),
   }),
 });

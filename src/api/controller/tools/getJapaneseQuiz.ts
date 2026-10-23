@@ -102,12 +102,14 @@ export default createElysia()
   })
 
   .get("/vocabulary", async ({
-    query
+    query,
+    set
   }: {
     query: {
       level: string;
       limit: string;
     };
+    set: { status?: number };
   }) => {
     const { level = "N5", limit = "20" } = query;
 
@@ -115,6 +117,7 @@ export default createElysia()
     const upperLevel = level.toUpperCase();
 
     if (!validLevels.includes(upperLevel)) {
+      set.status = 400;
       return {
         success: false,
         error: "Invalid level. Use N5, N4, N3, N2, or N1",
@@ -131,6 +134,7 @@ export default createElysia()
         words,
       };
     } catch (error: any) {
+      set.status = 502;
       return {
         success: false,
         error: error.message || "Failed to fetch vocabulary",
@@ -147,13 +151,14 @@ export default createElysia()
       description: "Retrieves Japanese vocabulary words for specified JLPT level",
     },
   })
-  .get("/quiz", async ({ query }: any) => {
+  .get("/quiz", async ({ query, set }: any) => {
     const { level = "N5", count = "10" } = query;
 
     const validLevels = ["N5", "N4", "N3", "N2", "N1"];
     const upperLevel = level.toUpperCase();
 
     if (!validLevels.includes(upperLevel)) {
+      set.status = 400;
       return {
         success: false,
         error: "Invalid level. Use N5, N4, N3, N2, or N1",
@@ -172,6 +177,7 @@ export default createElysia()
         questions: quiz,
       };
     } catch (error: any) {
+      set.status = 502;
       return {
         success: false,
         error: error.message || "Failed to generate quiz",
@@ -189,13 +195,14 @@ export default createElysia()
     },
   })
 
-  .get("/random", async ({ query }: any) => {
+  .get("/random", async ({ query, set }: any) => {
     const { level = "N5" } = query;
 
     const validLevels = ["N5", "N4", "N3", "N2", "N1"];
     const upperLevel = level.toUpperCase();
 
     if (!validLevels.includes(upperLevel)) {
+      set.status = 400;
       return {
         success: false,
         error: "Invalid level. Use N5, N4, N3, N2, or N1",
@@ -206,6 +213,7 @@ export default createElysia()
       const words = await getVocabularyByLevel(upperLevel, 1);
 
       if (words.length === 0) {
+        set.status = 404;
         return {
           success: false,
           error: "No vocabulary found for this level",
@@ -218,6 +226,7 @@ export default createElysia()
         word: words[0],
       };
     } catch (error: any) {
+      set.status = 502;
       return {
         success: false,
         error: error.message || "Failed to fetch random word",

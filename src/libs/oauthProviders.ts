@@ -1,6 +1,7 @@
 import { Google, GitHub, Discord, Facebook } from "arctic";
+import { apiBaseUrl } from "@/utils/urls";
 
-const baseURL = Bun.env.BASE_URL ?? "http://localhost:3005";
+const baseURL = apiBaseUrl();
 
 const googleClientId = Bun.env.GOOGLE_CLIENT_ID!;
 const googleClientSecret = Bun.env.GOOGLE_CLIENT_SECRET!;

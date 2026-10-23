@@ -1,4 +1,5 @@
 import { prismaClient } from "@/libs/prismaDatabase";
+import { withAvatarUrl } from "@/utils/userProfile";
 
 /**
  * Raw-SQL store for the Kanban tracker. Deliberately avoids a Prisma model so it
@@ -73,12 +74,38 @@ export async function listTasks(): Promise<TrackerTask[]> {
   return rows.map(rowToTask);
 }
 
-export async function countTasks(): Promise<number> {
-  await ensureTable();
-  const rows = await prismaClient.$queryRawUnsafe<{ c: number }[]>(
-    `SELECT COUNT(*)::int AS c FROM "TrackerTask"`
+/** Older cards stored an expiring presigned avatar; serve each creator's current, stable one. */
+export async function withCreatorAvatars(tasks: TrackerTask[]): Promise<TrackerTask[]> {
+  const ids = [...new Set(tasks.map((task) => task.createdById).filter((id): id is string => !!id))];
+  if (ids.length === 0) return tasks;
+  const users = await prismaClient.user.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, avatarUrl: true, avatarMinioKey: true, iconUrl: true },
+  });
+  const avatars = new Map(users.map((u) => [u.id, withAvatarUrl(u).avatarUrl ?? u.iconUrl]));
+  return tasks.map((task) =>
+    task.createdById && avatars.has(task.createdById)
+      ? { ...task, createdByAvatar: avatars.get(task.createdById) ?? null }
+      : task
   );
-  return rows[0]?.c ?? 0;
+}
+
+// From the highest existing number, not the row count, which repeats a key after a deletion.
+async function nextKey(): Promise<string> {
+  const rows = await prismaClient.$queryRawUnsafe<{ n: number }[]>(
+    `SELECT COALESCE(MAX(CAST(SUBSTRING("key" FROM 4) AS INTEGER)), 100)::int + 1 AS n FROM "TrackerTask" WHERE "key" ~ '^RH-[0-9]+$'`
+  );
+  return `RH-${rows[0]?.n ?? 101}`;
+}
+
+// Raw queries report Postgres' 23505 as P2010; typed queries as P2002.
+function isUniqueViolation(err: unknown): boolean {
+  const e = err as { code?: string; message?: string; meta?: { driverAdapterError?: { cause?: { kind?: string } } } };
+  return (
+    e?.code === "P2002" ||
+    e?.meta?.driverAdapterError?.cause?.kind === "UniqueConstraintViolation" ||
+    /\b23505\b/.test(e?.message ?? "")
+  );
 }
 
 export async function topOrder(status: string): Promise<number | null> {
@@ -100,7 +127,6 @@ export async function getTask(id: string): Promise<TrackerTask | null> {
 }
 
 export async function createTask(input: {
-  key: string;
   title: string;
   description: string | null;
   status: string;
@@ -112,27 +138,33 @@ export async function createTask(input: {
   createdByAvatar: string | null;
 }): Promise<TrackerTask> {
   await ensureTable();
-  const id = crypto.randomUUID();
-  // Set created_at/updated_at explicitly — a Prisma-migrated table's @updatedAt
-  // column is NOT NULL with no DB default (Prisma fills it at the app layer).
-  const rows = await prismaClient.$queryRawUnsafe<Record<string, unknown>[]>(
-    `INSERT INTO "TrackerTask"
-       ("id","key","title","description","status","priority","type","order","created_by_id","created_by_name","created_by_avatar","created_at","updated_at")
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, now(), now())
-     RETURNING *`,
-    id,
-    input.key,
-    input.title,
-    input.description,
-    input.status,
-    input.priority,
-    input.type,
-    input.order,
-    input.createdById,
-    input.createdByName,
-    input.createdByAvatar
-  );
-  return rowToTask(rows[0]!);
+  for (let attempt = 1; ; attempt++) {
+    try {
+      // Set created_at/updated_at explicitly — a Prisma-migrated table's @updatedAt
+      // column is NOT NULL with no DB default (Prisma fills it at the app layer).
+      const rows = await prismaClient.$queryRawUnsafe<Record<string, unknown>[]>(
+        `INSERT INTO "TrackerTask"
+           ("id","key","title","description","status","priority","type","order","created_by_id","created_by_name","created_by_avatar","created_at","updated_at")
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, now(), now())
+         RETURNING *`,
+        crypto.randomUUID(),
+        await nextKey(),
+        input.title,
+        input.description,
+        input.status,
+        input.priority,
+        input.type,
+        input.order,
+        input.createdById,
+        input.createdByName,
+        input.createdByAvatar
+      );
+      return rowToTask(rows[0]!);
+    } catch (err) {
+      // Two cards created at once can pick the same next key.
+      if (attempt >= 3 || !isUniqueViolation(err)) throw err;
+    }
+  }
 }
 
 export async function updateTask(
