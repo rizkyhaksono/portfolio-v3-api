@@ -214,7 +214,7 @@ export type AdminSettingsGroupByOutputType = {
   _max: AdminSettingsMaxAggregateOutputType | null
 }
 
-type GetAdminSettingsGroupByPayload<T extends AdminSettingsGroupByArgs> = Prisma.PrismaPromise<
+export type GetAdminSettingsGroupByPayload<T extends AdminSettingsGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<AdminSettingsGroupByOutputType, T['by']> &
       {
@@ -1328,6 +1328,11 @@ export type AdminSettingsFindManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Skip the first `n` AdminSettings.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of AdminSettings.
+   */
   distinct?: Prisma.AdminSettingsScalarFieldEnum | Prisma.AdminSettingsScalarFieldEnum[]
 }
 

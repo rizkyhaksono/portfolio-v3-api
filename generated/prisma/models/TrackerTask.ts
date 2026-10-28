@@ -248,7 +248,7 @@ export type TrackerTaskGroupByOutputType = {
   _max: TrackerTaskMaxAggregateOutputType | null
 }
 
-type GetTrackerTaskGroupByPayload<T extends TrackerTaskGroupByArgs> = Prisma.PrismaPromise<
+export type GetTrackerTaskGroupByPayload<T extends TrackerTaskGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<TrackerTaskGroupByOutputType, T['by']> &
       {
@@ -1230,6 +1230,11 @@ export type TrackerTaskFindManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Skip the first `n` TrackerTasks.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of TrackerTasks.
+   */
   distinct?: Prisma.TrackerTaskScalarFieldEnum | Prisma.TrackerTaskScalarFieldEnum[]
 }
 
