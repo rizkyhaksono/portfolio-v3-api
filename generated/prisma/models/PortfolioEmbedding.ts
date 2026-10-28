@@ -161,7 +161,7 @@ export type PortfolioEmbeddingGroupByOutputType = {
   _max: PortfolioEmbeddingMaxAggregateOutputType | null
 }
 
-type GetPortfolioEmbeddingGroupByPayload<T extends PortfolioEmbeddingGroupByArgs> = Prisma.PrismaPromise<
+export type GetPortfolioEmbeddingGroupByPayload<T extends PortfolioEmbeddingGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<PortfolioEmbeddingGroupByOutputType, T['by']> &
       {
@@ -982,6 +982,11 @@ export type PortfolioEmbeddingFindManyArgs<ExtArgs extends runtime.Types.Extensi
    * Skip the first `n` PortfolioEmbeddings.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of PortfolioEmbeddings.
+   */
   distinct?: Prisma.PortfolioEmbeddingScalarFieldEnum | Prisma.PortfolioEmbeddingScalarFieldEnum[]
 }
 

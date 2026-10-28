@@ -172,7 +172,7 @@ export type PublicChatMessageGroupByOutputType = {
   _max: PublicChatMessageMaxAggregateOutputType | null
 }
 
-type GetPublicChatMessageGroupByPayload<T extends PublicChatMessageGroupByArgs> = Prisma.PrismaPromise<
+export type GetPublicChatMessageGroupByPayload<T extends PublicChatMessageGroupByArgs> = Prisma.PrismaPromise<
   Array<
     Prisma.PickEnumerable<PublicChatMessageGroupByOutputType, T['by']> &
       {
@@ -1451,6 +1451,11 @@ export type PublicChatMessageFindManyArgs<ExtArgs extends runtime.Types.Extensio
    * Skip the first `n` PublicChatMessages.
    */
   skip?: number
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   * 
+   * Filter by unique combinations of PublicChatMessages.
+   */
   distinct?: Prisma.PublicChatMessageScalarFieldEnum | Prisma.PublicChatMessageScalarFieldEnum[]
 }
 
