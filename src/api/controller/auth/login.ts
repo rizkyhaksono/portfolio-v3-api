@@ -9,6 +9,10 @@ import lokiLogger from "@/libs/lokiLogger";
 import { checkAuthRateLimit } from "@/libs/aiRateLimit";
 import { getClientIp } from "@/utils/clientIp";
 
+// A throwaway hash, made once, so a login for an unknown email still runs one argon2 verify.
+let missHashValue: Promise<string> | undefined;
+const missHash = () => (missHashValue ??= bunPassword.hash(crypto.randomUUID()));
+
 export default createElysia()
   .use(authModel)
   .post("/login", async ({
@@ -40,6 +44,8 @@ export default createElysia()
     // Generic message for both branches — avoids user enumeration (don't reveal
     // whether the email exists vs the password was wrong).
     if (!user?.passwordSalt || !user?.hashedPassword) {
+      // Spend the same argon2 time as a real check, so response time does not reveal which emails exist.
+      await bunPassword.verify(password, await missHash());
       lokiLogger.error({ message: "Login failed: user not found or has no password", userId: user?.id });
       throw new BadRequestException("Invalid email or password.");
     }

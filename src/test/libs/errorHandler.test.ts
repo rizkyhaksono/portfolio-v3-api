@@ -13,6 +13,9 @@ const app = new Elysia()
   .get("/missing", () => {
     throw new NotFoundException("Chat not found");
   })
+  .get("/crash", () => {
+    throw new Error("Invalid `prisma.project.findMany()` invocation in /app/src/api/controller/project/getAllProject.ts:21");
+  })
   .post("/signup", () => "ok", {
     body: t.Object({ email: t.String({ format: "email" }), password: t.String({ minLength: 8 }) }),
   });
@@ -52,5 +55,15 @@ describe("global error handler", () => {
     expect(logged[0]).toContain('"code":"VALIDATION"');
     expect(logged[0]).not.toContain("hunter2");
     expect(logged[0]).not.toContain("ann@example.com");
+  });
+
+  it("answers a foreign error with a generic 500 and keeps its details in the log", async () => {
+    logged.length = 0;
+    const res = await get("/crash");
+    expect(res.status).toBe(500);
+    const body = await res.text();
+    expect(body).not.toContain("prisma");
+    expect(body).not.toContain("/app/src");
+    expect(logged[0]).toContain("prisma.project.findMany");
   });
 });

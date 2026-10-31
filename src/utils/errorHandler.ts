@@ -84,6 +84,8 @@ const error = new Elysia()
     switch (code) {
       case "NOT_FOUND":
         return error instanceof NotFoundException ? error : new NotFoundException();
+      // UNKNOWN is any error that is not one of ours (Prisma, MinIO, arctic...): log it, never echo it.
+      case "UNKNOWN":
       case "INTERNAL_SERVER_ERROR":
         if (logestic) {
           logestic.error(describeError(code, error));

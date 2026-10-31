@@ -4,8 +4,8 @@ import { z } from "zod";
  * Page-based pagination query schema
  */
 export const pageBasedPaginationQuerySchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(50).default(10),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
 });
 
 export type PageBasedPaginationQuery = z.infer<typeof pageBasedPaginationQuerySchema>;

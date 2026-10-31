@@ -97,3 +97,27 @@ describe("GET /v3/user/count", () => {
     expect(await res.json()).toEqual({ status: 200, data: { total: 42 } });
   });
 });
+
+describe("POST /v3/asset/minio", () => {
+  // A 1x1 PNG, so body validation passes and only the guard decides.
+  const png = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="), (c) => c.charCodeAt(0));
+  const upload = () => {
+    const form = new FormData();
+    form.append("file", new File([png], "x.png", { type: "image/png" }));
+    return apiRoutes.handle(
+      new Request("http://localhost/v3/asset/minio", { method: "POST", headers: { authorization: "Bearer s" }, body: form })
+    );
+  };
+
+  it("is admin only", async () => {
+    role = "USER";
+    expect((await upload()).status).toBe(403);
+  });
+});
+
+describe("GET /v3/project paging", () => {
+  it("rejects a fractional page before it reaches Prisma", async () => {
+    const res = await apiRoutes.handle(new Request("http://localhost/v3/project?page=1.05"));
+    expect(res.status).toBe(422);
+  });
+});

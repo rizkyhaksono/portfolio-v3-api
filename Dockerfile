@@ -27,4 +27,7 @@ ENV NODE_ENV=production
 ENV PORT=3121
 EXPOSE 3121
 
+# Run as the image's unprivileged bun user; the app only reads /app.
+USER bun
+
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

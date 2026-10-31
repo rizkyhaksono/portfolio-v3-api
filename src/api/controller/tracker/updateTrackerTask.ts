@@ -54,8 +54,8 @@ export default createElysia()
         title: t.Optional(t.String({ maxLength: 140 })),
         description: t.Optional(t.String({ maxLength: 2000 })),
         status: t.Optional(t.String()),
-        priority: t.Optional(t.String()),
-        type: t.Optional(t.String()),
+        priority: t.Optional(t.UnionEnum(["high", "medium", "low"])),
+        type: t.Optional(t.UnionEnum(["task", "bug", "story"])),
         order: t.Optional(t.Number()),
       }),
       detail: {

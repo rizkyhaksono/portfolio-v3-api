@@ -1,6 +1,7 @@
 import ShortUniqueId from "short-unique-id";
 import MinioClient from "@/libs/minioClient";
 import { authGuard } from "@/libs/authGuard";
+import { adminGuard } from "@/libs/roleGuards";
 import { createElysia } from "@/libs/elysia";
 import logger from "@/libs/lokiLogger";
 import { getMinioPublicLink, PRESIGN_MAX_SECONDS } from "@/utils/minioUtils";
@@ -10,6 +11,8 @@ import { minioModel } from "@/models/minio.model";
 export default createElysia()
   .use(minioModel)
   .use(authGuard)
+  // Only the dashboard uploads here; open to any account it was free 5 MB image hosting.
+  .use(adminGuard)
   .post(
     "/minio",
     async ({
@@ -72,7 +75,7 @@ export default createElysia()
       type: "multipart/form-data",
       detail: {
         tags: ["Assets"],
-        summary: "Upload File to MinIO",
+        summary: "Upload File to MinIO (admin)",
         description: "Upload an image file to MinIO and get its public link",
       }
     }
