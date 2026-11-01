@@ -17,7 +17,7 @@ describe("getClientIp", () => {
   });
 
   it("trusts x-client-ip only with the matching internal key", () => {
-    const headers = { "x-client-ip": "203.0.113.7", "cf-connecting-ip": "198.51.100.1" };
+    const headers = { "x-client-ip": "203.0.113.7", "x-real-ip": "198.51.100.1" };
     expect(getClientIp(req({ ...headers, "x-internal-key": SECRET }))).toBe("203.0.113.7");
     expect(getClientIp(req({ ...headers, "x-internal-key": "wrong-secret-value!!" }))).toBe("198.51.100.1");
     expect(getClientIp(req({ ...headers, "x-internal-key": "short" }))).toBe("198.51.100.1");
@@ -36,11 +36,18 @@ describe("getClientIp", () => {
     expect(getClientIp(r, server)).toBe("10.0.0.9");
   });
 
-  it("falls back cf-connecting-ip, x-real-ip, last XFF hop, socket, anonymous", () => {
+  it("trusts cf-connecting-ip only when the proxy's peer is a Cloudflare edge", () => {
+    const visitor = "198.51.100.1";
+    expect(getClientIp(req({ "cf-connecting-ip": visitor, "x-real-ip": "172.70.1.2" }))).toBe(visitor);
+    expect(getClientIp(req({ "cf-connecting-ip": visitor, "x-forwarded-for": "6.6.6.6, 2606:4700::1" }))).toBe(visitor);
+    // Straight to the origin: the header is the caller's own claim.
+    expect(getClientIp(req({ "cf-connecting-ip": visitor, "x-real-ip": "203.0.113.50" }))).toBe("203.0.113.50");
+    expect(getClientIp(req({ "cf-connecting-ip": visitor }), server)).toBe("10.0.0.9");
+    expect(getClientIp(req({ "cf-connecting-ip": "not-an-ip", "x-real-ip": "172.70.1.2" }))).toBe("172.70.1.2");
+  });
+
+  it("falls back x-real-ip, last XFF hop, socket, anonymous", () => {
     const xff = "6.6.6.6, 198.51.100.3";
-    expect(getClientIp(req({ "cf-connecting-ip": "198.51.100.1", "x-real-ip": "1.1.1.1", "x-forwarded-for": xff }))).toBe(
-      "198.51.100.1"
-    );
     expect(getClientIp(req({ "x-real-ip": "198.51.100.2", "x-forwarded-for": xff }))).toBe("198.51.100.2");
     expect(getClientIp(req({ "x-forwarded-for": xff }))).toBe("198.51.100.3");
     expect(getClientIp(req({}), server)).toBe("10.0.0.9");
