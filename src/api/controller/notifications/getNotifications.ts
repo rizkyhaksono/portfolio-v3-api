@@ -3,10 +3,9 @@ import { authGuard } from "@/libs/authGuard";
 import { adminGuard } from "@/libs/roleGuards";
 import { prismaClient } from "@/libs/prismaDatabase";
 import { listFeedback } from "@/libs/feedbackStore";
-import { listTasks } from "@/libs/trackerStore";
 import { recentReactions } from "@/libs/reactionStore";
 
-type NotifType = "feedback" | "chat" | "tracker" | "reaction";
+type NotifType = "feedback" | "chat" | "reaction";
 
 interface AdminNotification {
   id: string;
@@ -18,7 +17,7 @@ interface AdminNotification {
 }
 
 /**
- * Admin notification feed — aggregates recent feedback, public-chat, tracker, and reaction
+ * Admin notification feed — aggregates recent feedback, public-chat and reaction
  * events. Which types are included is controlled by the admin's AdminSettings toggles
  * (reused fields → see the settings page mapping). Each source is isolated in try/catch.
  */
@@ -32,7 +31,6 @@ export default createElysia()
       const want = {
         feedback: settings?.emailNotifications ?? true,
         chat: settings?.pushNotifications ?? true,
-        tracker: settings?.projectUpdates ?? true,
         reaction: settings?.securityAlerts ?? true,
       };
 
@@ -72,25 +70,6 @@ export default createElysia()
               detail: m.message.slice(0, 90),
               href: "/chat",
               createdAt: m.createdAt.toISOString(),
-            });
-          }
-        } catch {
-          /* skip source */
-        }
-      }
-
-      if (want.tracker) {
-        try {
-          const tasks = await listTasks();
-          const recent = [...tasks].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 15);
-          for (const t of recent) {
-            out.push({
-              id: `tracker:${t.id}`,
-              type: "tracker",
-              title: `New card: ${t.title}`,
-              detail: `${t.key} · ${t.status}`,
-              href: "/tracker",
-              createdAt: t.createdAt.toISOString(),
             });
           }
         } catch {

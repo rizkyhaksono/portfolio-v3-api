@@ -63,8 +63,7 @@ export const ModelName = {
   PasswordResetToken: 'PasswordResetToken',
   AIChat: 'AIChat',
   AIChatMessage: 'AIChatMessage',
-  PublicChatMessage: 'PublicChatMessage',
-  TrackerTask: 'TrackerTask'
+  PublicChatMessage: 'PublicChatMessage'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -258,25 +257,6 @@ export const PublicChatMessageScalarFieldEnum = {
 } as const
 
 export type PublicChatMessageScalarFieldEnum = (typeof PublicChatMessageScalarFieldEnum)[keyof typeof PublicChatMessageScalarFieldEnum]
-
-
-export const TrackerTaskScalarFieldEnum = {
-  id: 'id',
-  key: 'key',
-  title: 'title',
-  description: 'description',
-  status: 'status',
-  priority: 'priority',
-  type: 'type',
-  order: 'order',
-  createdById: 'createdById',
-  createdByName: 'createdByName',
-  createdByAvatar: 'createdByAvatar',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type TrackerTaskScalarFieldEnum = (typeof TrackerTaskScalarFieldEnum)[keyof typeof TrackerTaskScalarFieldEnum]
 
 
 export const SortOrder = {

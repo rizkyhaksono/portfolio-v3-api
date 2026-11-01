@@ -40,12 +40,6 @@ import {
   ocrDemo,
   jdMatcher,
 } from "./controller/ai";
-import {
-  getTrackerTasks,
-  createTrackerTask,
-  updateTrackerTask,
-  deleteTrackerTask,
-} from "./controller/tracker";
 import { getHealth } from "./controller/health";
 import { getReactions, addReaction } from "./controller/reactions";
 import { createFeedback, listFeedback, updateFeedback } from "./controller/feedback";
@@ -148,13 +142,6 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(reindexPortfolio)
       .use(ocrDemo)
       .use(jdMatcher)
-  )
-  .group("/tracker", (api) =>
-    api
-      .use(getTrackerTasks)
-      .use(createTrackerTask)
-      .use(updateTrackerTask)
-      .use(deleteTrackerTask)
   )
   .group("/health", (api) => api.use(getHealth))
   .group("/reactions", (api) => api.use(getReactions).use(addReaction))
