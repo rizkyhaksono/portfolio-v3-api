@@ -24,7 +24,6 @@ mock.module("@/libs/minioClient", () => ({
 
 const ENV_KEYS = [
   "MINIO_HOST",
-  "GENERATIVE_AI_API_KEY",
   "SUPABASE_URL",
   "NEXT_PUBLIC_SUPABASE_URL",
   "SUPABASE_ANON_KEY",
@@ -61,7 +60,6 @@ describe("GET /health", () => {
     expect(a.data.services).toEqual([
       { name: "Database", status: "operational", latencyMs: expect.any(Number) },
       { name: "S3", status: "down", latencyMs: null, detail: "Not responding" },
-      { name: "AI", status: "down", latencyMs: null, detail: "Unavailable" },
     ]);
   });
 });

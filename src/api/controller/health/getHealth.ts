@@ -53,15 +53,6 @@ async function runChecks(): Promise<HealthReport> {
     checks.push(probe("S3", () => MinioClient.bucketExists(process.env.MINIO_BUCKET_NAME ?? "")));
   }
 
-  // Config-only check on this API process (no paid Gemini call).
-  checks.push(
-    Promise.resolve<HealthService>(
-      process.env.GENERATIVE_AI_API_KEY
-        ? { name: "AI", status: "operational", latencyMs: null }
-        : { name: "AI", status: "down", latencyMs: null, detail: "Unavailable" }
-    )
-  );
-
   const sbUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const sbKey = process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (sbUrl && sbKey) {
@@ -86,7 +77,7 @@ async function runChecks(): Promise<HealthReport> {
 const reportCache = new TtlCache<HealthReport>(30 * 1000, 1);
 
 /** Public health probe for the status page. Each dependency is checked in isolation so one
- * outage doesn't fail the whole response. No paid/external AI calls (AI is config-only). */
+ * outage doesn't fail the whole response. The AI provider is left off this public page on purpose. */
 export default createElysia().get(
   "/",
   async () => {
@@ -97,7 +88,7 @@ export default createElysia().get(
     detail: {
       tags: ["Health"],
       summary: "Service health check (public)",
-      description: "Probes DB, storage, AI config, and Supabase for the public status page. Cached for 30 s.",
+      description: "Probes DB, storage and Supabase for the public status page. Cached for 30 s.",
     },
   },
 );
