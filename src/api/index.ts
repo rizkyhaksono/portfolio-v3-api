@@ -30,16 +30,8 @@ import {
   updateEducation,
   deleteEducation
 } from "./controller/education";
-import {
-  requestAIChat,
-  getAIChat,
-  getAIChatById,
-  updateAIChat,
-  deleteAIChat,
-  reindexPortfolio,
-  ocrDemo,
-  jdMatcher,
-} from "./controller/ai";
+// Etan AI is switched off for now (owner, 2026-11-05): no /v3/ai route, so no Gemini call is reachable.
+// To bring it back, restore this import and the `.group("/ai", …)` block below (see git history).
 import { getHealth } from "./controller/health";
 import { getReactions, addReaction } from "./controller/reactions";
 import { createFeedback, listFeedback, updateFeedback } from "./controller/feedback";
@@ -131,17 +123,6 @@ const apiRoutes = createElysia({ prefix: "/v3" })
       .use(getEducationById)
       .use(updateEducation)
       .use(deleteEducation)
-  )
-  .group("/ai", (api) =>
-    api
-      .use(requestAIChat)
-      .use(getAIChat)
-      .use(getAIChatById)
-      .use(updateAIChat)
-      .use(deleteAIChat)
-      .use(reindexPortfolio)
-      .use(ocrDemo)
-      .use(jdMatcher)
   )
   .group("/health", (api) => api.use(getHealth))
   .group("/reactions", (api) => api.use(getReactions).use(addReaction))
