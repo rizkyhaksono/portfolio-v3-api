@@ -121,3 +121,15 @@ describe("GET /v3/project paging", () => {
     expect(res.status).toBe(422);
   });
 });
+
+describe("/v3/ai", () => {
+  it("is switched off: no route answers", async () => {
+    role = "ADMIN";
+    const get = await apiRoutes.handle(new Request("http://localhost/v3/ai", { headers: { authorization: "Bearer s" } }));
+    const post = await apiRoutes.handle(
+      new Request("http://localhost/v3/ai/jd-fit", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })
+    );
+    expect(get.status).toBe(404);
+    expect(post.status).toBe(404);
+  });
+});
