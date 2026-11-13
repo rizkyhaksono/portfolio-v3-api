@@ -1,17 +1,9 @@
-import { timingSafeEqual } from "node:crypto";
 import { BlockList, isIP } from "node:net";
+import { hasValidInternalKey } from "@/libs/internalProxy";
+
+export { hasValidInternalKey } from "@/libs/internalProxy";
 
 type RequestIpServer = { requestIP?: (r: Request) => { address?: string } | null };
-
-/** True when the request carries the frontend server's shared secret in `x-internal-key`. */
-export function hasValidInternalKey(request: Request): boolean {
-  const secret = process.env.INTERNAL_PROXY_SECRET;
-  const key = request.headers.get("x-internal-key");
-  if (!secret || !key) return false;
-  const given = Buffer.from(key);
-  const expected = Buffer.from(secret);
-  return given.length === expected.length && timingSafeEqual(given, expected);
-}
 
 // Cloudflare's published edge ranges (cloudflare.com/ips-v4, /ips-v6). Refresh when they announce a change.
 const CLOUDFLARE_EDGES = [
@@ -31,23 +23,87 @@ function isCloudflareEdge(ip: string): boolean {
   return family !== 0 && cloudflare.check(ip, family === 6 ? "ipv6" : "ipv4");
 }
 
+/** Strip IPv4-mapped IPv6 and zone ids so CIDR checks see the address operators configure. */
+function normalizeIp(value: string | null | undefined): string | undefined {
+  if (!value) return undefined;
+  let ip = value.trim();
+  if (ip.toLowerCase().startsWith("::ffff:")) ip = ip.slice(7);
+  const zone = ip.indexOf("%");
+  if (zone !== -1) ip = ip.slice(0, zone);
+  return isIP(ip) ? ip : undefined;
+}
+
+let trustedKey: string | undefined;
+let trustedList = new BlockList();
+
+function trustedProxies(): BlockList {
+  // Unset and blank both trust nobody. Swarm ingress SNATs public clients onto a
+  // private address, so a built-in private-range default would still honor forged headers.
+  const raw = process.env.TRUSTED_PROXY_CIDRS?.trim() ?? "";
+  if (raw === trustedKey) return trustedList;
+  trustedKey = raw;
+  const list = new BlockList();
+  for (const entry of raw.split(",").map((part) => part.trim()).filter(Boolean)) {
+    addTrustedEntry(list, entry);
+  }
+  trustedList = list;
+  return list;
+}
+
+function addTrustedEntry(list: BlockList, entry: string): void {
+  const slash = entry.lastIndexOf("/");
+  if (slash === -1) {
+    const family = isIP(entry);
+    if (family === 0) return;
+    list.addAddress(entry, family === 6 ? "ipv6" : "ipv4");
+    return;
+  }
+  const network = entry.slice(0, slash);
+  const prefix = Number(entry.slice(slash + 1));
+  const family = isIP(network);
+  const max = family === 6 ? 128 : 32;
+  if (family === 0 || !Number.isInteger(prefix) || prefix < 0 || prefix > max) return;
+  try {
+    list.addSubnet(network, prefix, family === 6 ? "ipv6" : "ipv4");
+  } catch {
+    // A malformed entry adds no trust.
+  }
+}
+
+function isTrustedProxy(ip: string): boolean {
+  const family = isIP(ip);
+  if (family === 0) return false;
+  return trustedProxies().check(ip, family === 6 ? "ipv6" : "ipv4");
+}
+
+function socketAddress(request: Request, server?: RequestIpServer | null): string | undefined {
+  return normalizeIp(server?.requestIP?.(request)?.address);
+}
+
 /**
  * Resolve the requester's IP for rate limits.
- * The frontend server forwards the visitor's IP in `x-client-ip`, trusted only with a valid
- * `x-internal-key`. Otherwise the peer is what the origin proxy saw (x-real-ip, else the last
- * X-Forwarded-For hop; the first hop is attacker-controlled). `cf-connecting-ip` counts only when
- * that peer is a Cloudflare edge: anyone reaching the origin directly can send the header too.
+ * Forwarding headers count only when the TCP peer is inside TRUSTED_PROXY_CIDRS.
+ * Unset or blank trusts nobody, so a direct client — including one SNATed onto a
+ * private address by Swarm ingress — cannot forge cf-connecting-ip.
+ * x-client-ip still requires a valid x-internal-key. cf-connecting-ip counts only
+ * when the address the trusted proxy observed is a Cloudflare edge.
  */
 export function getClientIp(request: Request, server?: RequestIpServer | null): string {
-  const forwarded = request.headers.get("x-client-ip")?.trim();
-  if (forwarded && isIP(forwarded) && hasValidInternalKey(request)) return forwarded;
+  const socket = socketAddress(request, server);
+  if (!socket || !isTrustedProxy(socket)) return socket ?? "anonymous";
 
-  const xff = request.headers.get("x-forwarded-for")?.split(",").map((h) => h.trim()).filter(Boolean);
-  const peer =
-    request.headers.get("x-real-ip")?.trim() || xff?.[xff.length - 1] || server?.requestIP?.(request)?.address;
+  const forwarded = normalizeIp(request.headers.get("x-client-ip"));
+  if (forwarded && hasValidInternalKey(request)) return forwarded;
 
-  const cf = request.headers.get("cf-connecting-ip")?.trim();
-  if (cf && isIP(cf) && peer && isCloudflareEdge(peer)) return cf;
+  const xff = request.headers
+    .get("x-forwarded-for")
+    ?.split(",")
+    .map((hop) => normalizeIp(hop))
+    .filter((hop): hop is string => Boolean(hop));
+  const observed = normalizeIp(request.headers.get("x-real-ip")) ?? xff?.[xff.length - 1];
 
-  return peer ?? "anonymous";
+  const cf = normalizeIp(request.headers.get("cf-connecting-ip"));
+  if (cf && observed && isCloudflareEdge(observed)) return cf;
+
+  return observed ?? socket;
 }

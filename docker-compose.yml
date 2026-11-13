@@ -31,16 +31,20 @@ services:
       AI_USER_DAILY_BUDGET: ${AI_USER_DAILY_BUDGET:-40}
       SUPABASE_URL: ${SUPABASE_URL:-}
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
-      INTERNAL_PROXY_SECRET: ${INTERNAL_PROXY_SECRET:-}
+      INTERNAL_PROXY_SECRET: ${INTERNAL_PROXY_SECRET:?INTERNAL_PROXY_SECRET is required}
+      # Subnet of the proxy that may set client-IP headers. Leave blank to ignore those
+      # headers. Do not use 10.0.0.0/8: Swarm ingress SNATs public clients into 10/8.
+      # Example: TRUSTED_PROXY_CIDRS=10.0.1.0/24
+      TRUSTED_PROXY_CIDRS: "${TRUSTED_PROXY_CIDRS-}"
       API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
       IP_HASH_SALT: ${IP_HASH_SALT:-}
       COBALT_API_URL: ${COBALT_API_URL:-}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
-    ports:
-      - target: 3121
-        published: 3121
-        protocol: tcp
-        mode: ingress
+    # Do not publish 3121 on the host. Swarm ingress exposed it on every node's public
+    # interface, so a client could bypass Cloudflare and spoof cf-connecting-ip.
+    # Tasks on natee_edge_net and this stack's network reach the API at
+    # portfolio-natee-v3_api:3121 (the web service uses http://api:3121).
+    # Point Nginx Proxy Manager at that overlay name, not at <vps>:3121.
     networks:
       - default
       - natee_db_net
@@ -59,6 +63,9 @@ services:
       start_period: 60s
     deploy:
       replicas: 1
+      update_config:
+        order: start-first
+        failure_action: rollback
       restart_policy:
         condition: on-failure
       resources:
@@ -76,7 +83,7 @@ services:
       DOMAIN: ${WEB_DOMAIN:-}
       API_URL: ${WEB_API_URL:-http://api:3121}
       # Same value as the api service: sent as x-internal-key on server-to-server calls.
-      INTERNAL_PROXY_SECRET: ${INTERNAL_PROXY_SECRET:-}
+      INTERNAL_PROXY_SECRET: ${INTERNAL_PROXY_SECRET:?INTERNAL_PROXY_SECRET is required}
       SUPABASE_SERVICE_ROLE_KEY: ${WEB_SUPABASE_SERVICE_ROLE_KEY:-}
       GH_READ_USER_TOKEN_PERSONAL: ${WEB_GH_READ_USER_TOKEN_PERSONAL:-}
       DEVTO_KEY: ${WEB_DEVTO_KEY:-}

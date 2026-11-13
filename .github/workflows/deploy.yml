@@ -20,11 +20,11 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          bun-version: 1.2.x
+          bun-version: 1.4.4
 
       # The other suites in src/test are integration tests that need a running
       # server + database, so CI runs only the self-contained unit tests.
@@ -34,9 +34,9 @@ jobs:
           bunx tsc --noEmit
           bun test src/test/constants src/test/libs
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           platforms: linux/amd64
@@ -55,15 +55,62 @@ jobs:
       # Old images keep their :<sha> tag, so a plain prune never frees them; `-a` drops every
       # labelled image no container uses, while swarm's stopped task history keeps the last
       # few around for `docker service rollback`.
+      #
+      # Key auth only. Required GitHub secrets: VPS_SSH_KEY (private key), VPS_USER,
+      # VPS_HOST, VPS_KNOWN_HOSTS. Delete VPS_PASSWORD; password auth is no longer used.
       - name: Deploy to VPS
         env:
-          SSHPASS: ${{ secrets.VPS_PASSWORD }}
-          VPS: ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
           VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
           SHA: ${{ github.sha }}
         run: |
-          sudo apt-get install -y -qq sshpass >/dev/null
-          mkdir -p ~/.ssh && echo "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          docker save "$IMAGE:latest" "$IMAGE:$SHA" | gzip | sshpass -e ssh "$VPS" 'gunzip | docker load'
-          sshpass -e ssh "$VPS" "docker service update --force --image $IMAGE:$SHA $SERVICE >/dev/null \
+          set -euo pipefail
+          if [ -z "${VPS_SSH_KEY}" ] || [ -z "${VPS_HOST}" ] || [ -z "${VPS_USER}" ] || [ -z "${VPS_KNOWN_HOSTS}" ]; then
+            echo "Set GitHub secrets VPS_SSH_KEY, VPS_HOST, VPS_USER, and VPS_KNOWN_HOSTS." >&2
+            exit 1
+          fi
+          install -d -m 700 "${HOME}/.ssh"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "${HOME}/.ssh/known_hosts"
+          chmod 600 "${HOME}/.ssh/known_hosts"
+          printf '%s\n' "$VPS_SSH_KEY" > "${HOME}/.ssh/id_ed25519"
+          chmod 600 "${HOME}/.ssh/id_ed25519"
+          ssh_opts=(
+            -i "${HOME}/.ssh/id_ed25519"
+            -o IdentitiesOnly=yes
+            -o BatchMode=yes
+            -o StrictHostKeyChecking=yes
+          )
+          target="${VPS_USER}@${VPS_HOST}"
+          # The new image exits in production when this secret is blank. The check runs
+          # on the VPS so the service environment never reaches this runner. Image
+          # updates do not unpublish port 3121; that happens when the stack is redeployed.
+          set +e
+          ssh "${ssh_opts[@]}" "$target" bash -s -- "$SERVICE" <<'EOF'
+          set -euo pipefail
+          service="$1"
+          if ! env_dump=$(docker service inspect "$service" --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}'); then
+            exit 2
+          fi
+          printf '%s\n' "$env_dump" | awk -F= '$1=="INTERNAL_PROXY_SECRET" && length($2)>0 { found=1 } END { exit found ? 0 : 1 }'
+          EOF
+          secret_status=$?
+          set -e
+          if [ "$secret_status" -eq 255 ]; then
+            echo "SSH to the VPS failed. Deploy aborted." >&2
+            exit 1
+          fi
+          if [ "$secret_status" -eq 2 ]; then
+            echo "Could not read $SERVICE. Deploy aborted." >&2
+            exit 1
+          fi
+          if [ "$secret_status" -ne 0 ]; then
+            echo "Refusing to deploy: set a non-empty INTERNAL_PROXY_SECRET on $SERVICE first." >&2
+            exit 1
+          fi
+          docker save "$IMAGE:latest" "$IMAGE:$SHA" | gzip \
+            | ssh "${ssh_opts[@]}" "$target" 'gunzip | docker load'
+          ssh "${ssh_opts[@]}" "$target" \
+            "docker service update --force --update-order start-first --update-failure-action rollback --image $IMAGE:$SHA $SERVICE >/dev/null \
             && docker image prune -af --filter label=org.opencontainers.image.source=$IMAGE_SOURCE"

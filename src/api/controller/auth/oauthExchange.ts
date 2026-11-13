@@ -12,7 +12,8 @@ import { getClientIp, hasValidInternalKey } from "@/utils/clientIp";
 export default createElysia().post(
   "/oauth/exchange",
   async ({ body, request, server }: { body: { code: string }; request: Request; server: any }) => {
-    if (process.env.INTERNAL_PROXY_SECRET && !hasValidInternalKey(request)) {
+    // Fail closed: a missing or blank secret must not skip the check.
+    if (!hasValidInternalKey(request)) {
       throw new UnauthorizedException();
     }
 

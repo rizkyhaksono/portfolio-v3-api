@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # bun.lock is the lockfile this repo commits.
+  - package-ecosystem: bun
+    directory: /
+    schedule:
+      interval: weekly
+  # package-lock.json is gitignored. This entry stays so an npm lockfile is
+  # picked up if one is added; bun (above) is what updates the current tree.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly

@@ -4,6 +4,7 @@ import { prismaClient } from "@/libs/prismaDatabase";
 import authModel from "@/models/auth.model";
 import { password as bunPassword } from "bun";
 import { lucia } from "@/libs/luciaAuth";
+import { createSessionIfPasswordUnchanged } from "@/libs/passwordSession";
 import { t } from "elysia";
 import lokiLogger from "@/libs/lokiLogger";
 import { checkAuthRateLimit } from "@/libs/aiRateLimit";
@@ -43,7 +44,9 @@ export default createElysia()
 
     // Generic message for both branches — avoids user enumeration (don't reveal
     // whether the email exists vs the password was wrong).
-    if (!user?.passwordSalt || !user?.hashedPassword) {
+    const passwordSalt = user?.passwordSalt;
+    const hashedPassword = user?.hashedPassword;
+    if (!passwordSalt || !hashedPassword) {
       // Spend the same argon2 time as a real check, so response time does not reveal which emails exist.
       await bunPassword.verify(password, await missHash());
       lokiLogger.error({ message: "Login failed: user not found or has no password", userId: user?.id });
@@ -59,8 +62,8 @@ export default createElysia()
 
     if (
       !(await bunPassword.verify(
-        user.passwordSalt + password + passwordPepper,
-        user.hashedPassword
+        passwordSalt + password + passwordPepper,
+        hashedPassword
       ))
     ) {
       lokiLogger.error({ message: "Login failed: invalid password", userId: user.id });
@@ -68,8 +71,13 @@ export default createElysia()
     }
 
     try {
-      const session = await lucia.createSession(user.id, {});
-      const sessionCookie = lucia.createSessionCookie(session.id);
+      const sessionId = await prismaClient.$transaction((tx) =>
+        createSessionIfPasswordUnchanged(tx, { id: user.id, hashedPassword }),
+      );
+      if (!sessionId) {
+        throw new BadRequestException("Invalid email or password.");
+      }
+      const sessionCookie = lucia.createSessionCookie(sessionId);
 
       set.status = 200;
       cookie[sessionCookie.name]?.set({
@@ -83,6 +91,7 @@ export default createElysia()
         token: sessionCookie.value,
       };
     } catch (error) {
+      if (error instanceof BadRequestException) throw error;
       lokiLogger.error({ message: "Failed to create session", error: error instanceof Error ? error.message : "Unknown error" });
       set.status = 500;
       throw new Error("Failed to create session.");
