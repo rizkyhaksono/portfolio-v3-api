@@ -37,7 +37,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@types/pg": "^8.15.6",
+    "@types/pg": "^8.23.1",
     "bun-types": "1.4.4",
     "prisma": "7.10.1"
   },
