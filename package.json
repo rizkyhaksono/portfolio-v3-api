@@ -22,7 +22,7 @@
     "@prisma/instrumentation": "7.10.1",
     "@scalar/api-reference": "1.76.0",
     "arctic": "^2.3.4",
-    "dotenv": "^16.4.7",
+    "dotenv": "^18.0.10",
     "elysia": "1.4.30",
     "file-type": "^21.3.1",
     "logestic": "^1.2.4",
