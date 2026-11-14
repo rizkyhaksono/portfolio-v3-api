@@ -83,32 +83,6 @@ jobs:
             -o StrictHostKeyChecking=yes
           )
           target="${VPS_USER}@${VPS_HOST}"
-          # The new image exits in production when this secret is blank. The check runs
-          # on the VPS so the service environment never reaches this runner. Image
-          # updates do not unpublish port 3121; that happens when the stack is redeployed.
-          set +e
-          ssh "${ssh_opts[@]}" "$target" bash -s -- "$SERVICE" <<'EOF'
-          set -euo pipefail
-          service="$1"
-          if ! env_dump=$(docker service inspect "$service" --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}'); then
-            exit 2
-          fi
-          printf '%s\n' "$env_dump" | awk -F= '$1=="INTERNAL_PROXY_SECRET" && length($2)>0 { found=1 } END { exit found ? 0 : 1 }'
-          EOF
-          secret_status=$?
-          set -e
-          if [ "$secret_status" -eq 255 ]; then
-            echo "SSH to the VPS failed. Deploy aborted." >&2
-            exit 1
-          fi
-          if [ "$secret_status" -eq 2 ]; then
-            echo "Could not read $SERVICE. Deploy aborted." >&2
-            exit 1
-          fi
-          if [ "$secret_status" -ne 0 ]; then
-            echo "Refusing to deploy: set a non-empty INTERNAL_PROXY_SECRET on $SERVICE first." >&2
-            exit 1
-          fi
           docker save "$IMAGE:latest" "$IMAGE:$SHA" | gzip \
             | ssh "${ssh_opts[@]}" "$target" 'gunzip | docker load'
           ssh "${ssh_opts[@]}" "$target" \

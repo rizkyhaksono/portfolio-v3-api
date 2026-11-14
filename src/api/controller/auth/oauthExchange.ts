@@ -8,12 +8,14 @@ import {
 import { consumeHandoffCode } from "@/libs/oauthHandoff";
 import { checkRateLimit } from "@/libs/aiRateLimit";
 import { getClientIp, hasValidInternalKey } from "@/utils/clientIp";
+import { internalProxySecret } from "@/libs/internalProxy";
 
 export default createElysia().post(
   "/oauth/exchange",
   async ({ body, request, server }: { body: { code: string }; request: Request; server: any }) => {
-    // Fail closed: a missing or blank secret must not skip the check.
-    if (!hasValidInternalKey(request)) {
+    // Optional by the owner's choice: with INTERNAL_PROXY_SECRET set, only the frontend server may
+    // exchange; without it, the single-use 60 s code is the only guard.
+    if (internalProxySecret() && !hasValidInternalKey(request)) {
       throw new UnauthorizedException();
     }
 
