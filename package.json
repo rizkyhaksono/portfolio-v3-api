@@ -24,7 +24,7 @@
     "arctic": "^2.3.4",
     "dotenv": "^16.4.7",
     "elysia": "1.4.30",
-    "file-type": "^21.3.1",
+    "file-type": "^22.3.0",
     "logestic": "^1.2.4",
     "lucia": "^3.2.2",
     "minio": "8.0.7",
