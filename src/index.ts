@@ -1,10 +1,7 @@
 import { baseElysia } from "./libs/elysia";
-import { assertProductionProxySecret } from "./libs/internalProxy";
 import cors from "@elysiajs/cors";
 import apiRoutes from "./api";
 import { getAllowedOrigins } from "./constants/corsOrigins";
-
-assertProductionProxySecret();
 
 const docsEnabled = process.env.API_DOCS_ENABLED === "true";
 

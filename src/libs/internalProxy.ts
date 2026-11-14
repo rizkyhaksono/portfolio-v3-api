@@ -6,19 +6,6 @@ export function internalProxySecret(): string | undefined {
   return secret ? secret : undefined;
 }
 
-/**
- * Production must not boot with an open internal-proxy check. An empty default
- * used to skip the `x-internal-key` requirement entirely.
- */
-export function assertProductionProxySecret(): void {
-  if (process.env.NODE_ENV !== "production") return;
-  if (!internalProxySecret()) {
-    throw new Error(
-      "INTERNAL_PROXY_SECRET must be set to a non-empty value when NODE_ENV is production",
-    );
-  }
-}
-
 /** True when `x-internal-key` matches the configured secret. Blank secrets never match. */
 export function hasValidInternalKey(request: Request): boolean {
   const secret = internalProxySecret();

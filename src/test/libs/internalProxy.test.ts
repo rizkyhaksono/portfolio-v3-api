@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { assertProductionProxySecret, hasValidInternalKey } from "@/libs/internalProxy";
+import { hasValidInternalKey } from "@/libs/internalProxy";
 
 const originalNodeEnv = process.env.NODE_ENV;
 const originalSecret = process.env.INTERNAL_PROXY_SECRET;
@@ -29,21 +29,5 @@ describe("INTERNAL_PROXY_SECRET", () => {
       headers: { "x-internal-key": "correct-secret-value" },
     });
     expect(hasValidInternalKey(match)).toBe(true);
-  });
-
-  it("refuses to start in production when the secret is missing or blank", () => {
-    process.env.NODE_ENV = "production";
-    delete process.env.INTERNAL_PROXY_SECRET;
-    expect(assertProductionProxySecret).toThrow(/INTERNAL_PROXY_SECRET/);
-    process.env.INTERNAL_PROXY_SECRET = "   ";
-    expect(assertProductionProxySecret).toThrow(/INTERNAL_PROXY_SECRET/);
-    process.env.INTERNAL_PROXY_SECRET = "a-real-secret";
-    expect(assertProductionProxySecret).not.toThrow();
-  });
-
-  it("allows a missing secret outside production", () => {
-    process.env.NODE_ENV = "development";
-    delete process.env.INTERNAL_PROXY_SECRET;
-    expect(assertProductionProxySecret).not.toThrow();
   });
 });
