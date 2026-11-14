@@ -61,10 +61,19 @@ describe("POST /auth/oauth/exchange", () => {
     expect(await reused.json()).toEqual({ name: "BAD_REQUEST", message: "Sign-in link expired. Try again." });
   });
 
-  it("works without the key when no secret is configured", async () => {
+  it("rejects the exchange when INTERNAL_PROXY_SECRET is unset or blank", async () => {
     delete process.env.INTERNAL_PROXY_SECRET;
-    const res = await exchange(createHandoffCode("session-5"));
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ status: 200, token: "session-5" });
+    const code = createHandoffCode("session-5");
+    expect((await exchange(code)).status).toBe(401);
+    expect((await exchange(code, SECRET)).status).toBe(401);
+
+    process.env.INTERNAL_PROXY_SECRET = "   ";
+    expect((await exchange(code)).status).toBe(401);
+
+    // The failed attempts must not consume the single-use code.
+    process.env.INTERNAL_PROXY_SECRET = SECRET;
+    const ok = await exchange(code, SECRET);
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toEqual({ status: 200, token: "session-5" });
   });
 });

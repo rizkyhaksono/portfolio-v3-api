@@ -7,6 +7,7 @@ import { encodeHexLowerCase } from "@oslojs/encoding";
 import { password as bunPassword } from "bun";
 import { alphabet, generateRandomString } from "oslo/crypto";
 import { checkAuthRateLimit } from "@/libs/aiRateLimit";
+import { lockUserForPasswordChange } from "@/libs/passwordSession";
 import { getClientIp } from "@/utils/clientIp";
 
 export default createElysia().post(
@@ -48,15 +49,29 @@ export default createElysia().post(
     );
 
     // One transaction, so the token can never outlive the password change it authorised.
-    await prismaClient.$transaction([
-      prismaClient.user.update({
+    // The user row stays locked until every existing session is gone. Login takes the
+    // same lock and re-reads the hash before inserting, so an in-flight login cannot
+    // keep a session for the old password. Reset is unauthenticated, so there is no
+    // current session to keep; the next login creates a new one.
+    await prismaClient.$transaction(async (tx) => {
+      await lockUserForPasswordChange(tx, resetRecord.userId);
+      const fresh = await tx.passwordResetToken.findUnique({
+        where: { hashedToken: tokenHash },
+      });
+      if (!fresh || fresh.userId !== resetRecord.userId || fresh.expiresAt < new Date()) {
+        throw new BadRequestException("Invalid or expired reset token");
+      }
+      await tx.user.update({
         where: { id: resetRecord.userId },
         data: { hashedPassword, passwordSalt },
-      }),
-      prismaClient.passwordResetToken.delete({
+      });
+      await tx.passwordResetToken.delete({
         where: { userId: resetRecord.userId },
-      }),
-    ]);
+      });
+      await tx.session.deleteMany({
+        where: { userId: resetRecord.userId },
+      });
+    });
 
     return { status: 200, message: "Password updated successfully" };
   },

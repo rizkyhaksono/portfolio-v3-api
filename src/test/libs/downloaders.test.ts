@@ -6,14 +6,26 @@ mock.module("@/libs/lokiLogger", () => ({ default: { info() {}, warn() {}, error
 const { error } = await import("@/utils/errorHandler");
 const { getDownloader, getTiktokDownloader } = await import("@/api/controller/tools");
 
+const originalTrusted = process.env.TRUSTED_PROXY_CIDRS;
+process.env.TRUSTED_PROXY_CIDRS = "10.0.0.0/8";
+
 const app = new Elysia().use(error).group("/tools", (api) => api.use(getDownloader).use(getTiktokDownloader));
+// app.handle() has no TCP peer. Stand in for the reverse proxy the stack trusts, so x-real-ip
+// is the visitor address the same way it is behind Nginx Proxy Manager.
+(app as unknown as { server: { requestIP: () => { address: string } } }).server = {
+  requestIP: () => ({ address: "10.0.0.9" }),
+};
 const get = (path: string, ip = "198.51.100.10") =>
   app.handle(new Request(`http://localhost/tools${path}`, { headers: { "x-real-ip": ip } }));
 const unsupported = { name: "BAD_REQUEST", message: "That link is not supported." };
 
 const fetchSpy = spyOn(globalThis, "fetch").mockImplementation((async () =>
   Response.json({ status: "redirect", url: "https://cdn.example/v.mp4", filename: "v.mp4" })) as unknown as typeof fetch);
-afterAll(() => fetchSpy.mockRestore());
+afterAll(() => {
+  fetchSpy.mockRestore();
+  if (originalTrusted === undefined) delete process.env.TRUSTED_PROXY_CIDRS;
+  else process.env.TRUSTED_PROXY_CIDRS = originalTrusted;
+});
 
 describe("downloader URL validation", () => {
   it.each([
